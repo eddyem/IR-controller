@@ -1,0 +1,19 @@
+Short description of user protocol
+
+Symbol Function         Hardware     Argument
+>      LED on           LED          none
+<      LED off          LED          none
++      LED brighter     LED          none
+-      LED shade        LED          none
+0      Move Motor0      Motor0       int32_t
+1      Move Motor1      Motor1       int32_t
+2      Move Motor2      Motor2       int32_t
+3      Move Motor3      Motor3       int32_t
+4      Move Motor4      Motor4       int32_t
+a      ADC get value    ADC          none
+b      LED blink        LED          none
+c      1-wire get dev   1-wire       none
+h      Hall get state   Hall sensor  none
+p      1-wire show dev  1-wire       none
+t      1-wire get temp  1-wire       none
+

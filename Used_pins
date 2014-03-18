@@ -1,0 +1,23 @@
+pin used on P103
+
+PIN# FN name   Functionality. Attached hardware
+08   PC0       \
+09   PC1        | ADG506 address
+10   PC2        |   selection
+11   PC3       /
+24   PC4       ADG506 ADEN (enable switching)
+25   PC5       MOTOR0 EN
+26*  ADC8      Something to measure ADC
+27   PB1       DIR - direction for all motors
+29   SART3_TX  1-wire TX
+30   SART3_RX  1-wire RX
+37   PC6       \
+38   PC7        | MOTOR1..4
+39   PC8        |   EN
+40   PC9       /
+41   TIM1_CH1  PUL - "step" for all motors
+51   PC10      Hall sensor
+53*  PC12      Onboard LED
+
+---------
+* - maybe not necessary
