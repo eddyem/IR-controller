@@ -1,0 +1,220 @@
+EESchema Schematic File Version 2  date Пн 16 июн 2014 17:49:12
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:special
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+LIBS:ft2232
+LIBS:my_elements
+LIBS:STM32f103
+LIBS:vreg
+LIBS:open-project
+LIBS:ALL-cache
+EELAYER 27 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 12 14
+Title ""
+Date "16 jun 2014"
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L PC817 ICp1
+U 1 1 53BBC5DB
+P 3900 2450
+AR Path="/53BBC16A/53BBC5DB" Ref="ICp1"  Part="1" 
+AR Path="/53C73959/53BBC5DB" Ref="IC2"  Part="1" 
+AR Path="/53C7395A/53BBC5DB" Ref="IC4"  Part="1" 
+AR Path="/53C73958/53BBC5DB" Ref="IC?"  Part="1" 
+F 0 "ICp1" H 3690 2640 40  0000 C CNN
+F 1 "PC817" H 4050 2260 40  0000 C CNN
+F 2 "DIP4" H 3700 2270 30  0000 C CIN
+F 3 "~" H 3900 2450 60  0000 C CNN
+	1    3900 2450
+	1    0    0    -1  
+$EndComp
+Text HLabel 3150 1250 0    61   Output ~ 0
+GND_OUT
+Text HLabel 3150 900  0    61   Input ~ 0
++12V_IN
+Text HLabel 3200 2800 0    61   Input ~ 0
+GND
+Text HLabel 3200 2550 0    61   Input ~ 0
+~ON
+Text HLabel 3200 1450 0    61   Input ~ 0
++5V_IN
+$Comp
+L R0603 Rp1
+U 1 1 53BC5982
+P 3550 2000
+AR Path="/53BBC16A/53BC5982" Ref="Rp1"  Part="1" 
+AR Path="/53C73959/53BC5982" Ref="R17"  Part="1" 
+AR Path="/53C7395A/53BC5982" Ref="R23"  Part="1" 
+AR Path="/53C73958/53BC5982" Ref="R?"  Part="1" 
+F 0 "Rp1" V 3630 2000 40  0000 C CNN
+F 1 "330" V 3557 2001 40  0000 C CNN
+F 2 "SM0603" V 3480 2000 30  0001 C CNN
+F 3 "~" H 3550 2000 30  0000 C CNN
+	1    3550 2000
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWRp2
+U 1 1 53BC59A0
+P 4250 3300
+AR Path="/53BBC16A/53BC59A0" Ref="#PWRp2"  Part="1" 
+AR Path="/53C73959/53BC59A0" Ref="#PWR174"  Part="1" 
+AR Path="/53C7395A/53BC59A0" Ref="#PWR180"  Part="1" 
+AR Path="/53C73958/53BC59A0" Ref="#PWR?"  Part="1" 
+F 0 "#PWRp2" H 4250 3300 30  0001 C CNN
+F 1 "GND" H 4250 3230 30  0001 C CNN
+F 2 "" H 4250 3300 60  0000 C CNN
+F 3 "" H 4250 3300 60  0000 C CNN
+	1    4250 3300
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWRp3
+U 1 1 53BC59AD
+P 3300 2900
+AR Path="/53BBC16A/53BC59AD" Ref="#PWRp3"  Part="1" 
+AR Path="/53C73959/53BC59AD" Ref="#PWR173"  Part="1" 
+AR Path="/53C7395A/53BC59AD" Ref="#PWR179"  Part="1" 
+AR Path="/53C73958/53BC59AD" Ref="#PWR?"  Part="1" 
+F 0 "#PWRp3" H 3300 2900 30  0001 C CNN
+F 1 "GND" H 3300 2830 30  0001 C CNN
+F 2 "" H 3300 2900 60  0000 C CNN
+F 3 "" H 3300 2900 60  0000 C CNN
+	1    3300 2900
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3200 2800 3300 2800
+Wire Wire Line
+	3300 2800 3300 2900
+$Comp
+L NTE2984 Qp1
+U 1 1 53BC6050
+P 5050 2550
+AR Path="/53BBC16A/53BC6050" Ref="Qp1"  Part="1" 
+AR Path="/53C73959/53BC6050" Ref="Q4"  Part="1" 
+AR Path="/53C7395A/53BC6050" Ref="Q6"  Part="1" 
+AR Path="/53C73958/53BC6050" Ref="Q?"  Part="1" 
+F 0 "Qp1" H 4970 2790 60  0000 R CNN
+F 1 "NTE2984" H 5090 2310 60  0000 R CNN
+F 2 "TO220" H 5050 2550 60  0001 C CNN
+F 3 "~" H 5050 2550 60  0000 C CNN
+	1    5050 2550
+	1    0    0    -1  
+$EndComp
+$Comp
+L R0603 Rp3
+U 1 1 53BC7A4E
+P 4250 2950
+AR Path="/53BBC16A/53BC7A4E" Ref="Rp3"  Part="1" 
+AR Path="/53C73959/53BC7A4E" Ref="R18"  Part="1" 
+AR Path="/53C7395A/53BC7A4E" Ref="R24"  Part="1" 
+AR Path="/53C73958/53BC7A4E" Ref="R?"  Part="1" 
+F 0 "Rp3" V 4330 2950 40  0000 C CNN
+F 1 "10k" V 4257 2951 40  0000 C CNN
+F 2 "SM0603" V 4180 2950 30  0001 C CNN
+F 3 "~" H 4250 2950 30  0000 C CNN
+	1    4250 2950
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4250 3300 4250 3200
+Wire Wire Line
+	4250 2550 4250 2700
+$Comp
+L R0603 Rp2
+U 1 1 53BC8077
+P 4550 2550
+AR Path="/53BBC16A/53BC8077" Ref="Rp2"  Part="1" 
+AR Path="/53C73959/53BC8077" Ref="R19"  Part="1" 
+AR Path="/53C7395A/53BC8077" Ref="R25"  Part="1" 
+AR Path="/53C73958/53BC8077" Ref="R?"  Part="1" 
+F 0 "Rp2" V 4630 2550 40  0000 C CNN
+F 1 "100" V 4557 2551 40  0000 C CNN
+F 2 "SM0603" V 4480 2550 30  0001 C CNN
+F 3 "~" H 4550 2550 30  0000 C CNN
+	1    4550 2550
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	4300 2550 4250 2550
+Wire Wire Line
+	4850 2550 4800 2550
+Text HLabel 3200 1750 0    61   Input ~ 0
++5V_logic
+Wire Wire Line
+	3550 2350 3550 2250
+Wire Wire Line
+	3200 2550 3550 2550
+Wire Wire Line
+	3200 1750 3550 1750
+Wire Wire Line
+	3200 1450 4250 1450
+Wire Wire Line
+	4250 1450 4250 2350
+Wire Wire Line
+	3150 1250 5150 1250
+Wire Wire Line
+	5150 1250 5150 2350
+Text HLabel 3150 1100 0    61   Output ~ 0
++12V_OUT
+Wire Wire Line
+	3150 900  3250 900 
+Wire Wire Line
+	3250 900  3250 1100
+Wire Wire Line
+	3250 1100 3150 1100
+$Comp
+L GND #PWRp1
+U 1 1 53BD5858
+P 5150 2850
+AR Path="/53BBC16A/53BD5858" Ref="#PWRp1"  Part="1" 
+AR Path="/53C73959/53BD5858" Ref="#PWR175"  Part="1" 
+AR Path="/53C7395A/53BD5858" Ref="#PWR181"  Part="1" 
+AR Path="/53C73958/53BD5858" Ref="#PWR?"  Part="1" 
+F 0 "#PWRp1" H 5150 2850 30  0001 C CNN
+F 1 "GND" H 5150 2780 30  0001 C CNN
+F 2 "" H 5150 2850 60  0000 C CNN
+F 3 "" H 5150 2850 60  0000 C CNN
+	1    5150 2850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5150 2850 5150 2750
+$EndSCHEMATC
