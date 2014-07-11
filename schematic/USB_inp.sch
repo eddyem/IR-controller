@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Ср 09 июл 2014 18:42:33
+EESchema Schematic File Version 2  date Пт 11 июл 2014 12:31:03
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -41,7 +41,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 4 12
 Title "USB input circuit"
-Date "9 jul 2014"
+Date "11 jul 2014"
 Rev ""
 Comp "SAO RAS"
 Comment1 ""
@@ -49,47 +49,30 @@ Comment2 ""
 Comment3 ""
 Comment4 ""
 $EndDescr
-Wire Wire Line
-	1150 3250 1150 4150
-Connection ~ 1150 3400
-Connection ~ 1150 3700
 Text HLabel 1250 1550 0    60   Input ~ 0
 GND
 $Comp
-L GND #PWR078
+L GND #PWR077
 U 1 1 53983179
 P 1300 1700
-F 0 "#PWR078" H 1300 1700 30  0001 C CNN
+F 0 "#PWR077" H 1300 1700 30  0001 C CNN
 F 1 "GND" H 1300 1630 30  0001 C CNN
 F 2 "" H 1300 1700 60  0000 C CNN
 F 3 "" H 1300 1700 60  0000 C CNN
 	1    1300 1700
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	1250 1550 1300 1550
-Wire Wire Line
-	1300 1550 1300 1700
 $Comp
-L GND #PWR079
+L GND #PWR078
 U 1 1 5398318A
 P 1650 4200
-F 0 "#PWR079" H 1650 4200 30  0001 C CNN
+F 0 "#PWR078" H 1650 4200 30  0001 C CNN
 F 1 "GND" H 1650 4130 30  0001 C CNN
 F 2 "" H 1650 4200 60  0000 C CNN
 F 3 "" H 1650 4200 60  0000 C CNN
 	1    1650 4200
 	1    0    0    -1  
 $EndComp
-Connection ~ 1150 3850
-Wire Wire Line
-	1150 4150 2250 4150
-Wire Wire Line
-	1650 4150 1650 4200
-Wire Wire Line
-	2250 4150 2250 3700
-Connection ~ 1650 4150
-Connection ~ 2250 3850
 $Comp
 L USBLC6-2 U4
 U 1 1 5395C045
@@ -112,27 +95,6 @@ F 3 "" H 5300 2200 60  0000 C CNN
 	1    5300 2200
 	-1   0    0    1   
 $EndComp
-Wire Wire Line
-	2250 3400 2800 3400
-Wire Wire Line
-	2250 3550 2800 3550
-Wire Wire Line
-	2800 3550 2800 3500
-Text HLabel 1250 2000 0    60   Input ~ 0
-+3.3V
-Wire Wire Line
-	1250 2000 1350 2000
-$Comp
-L +3.3V #PWR080
-U 1 1 5395CBF8
-P 1350 2000
-F 0 "#PWR080" H 1350 1960 30  0001 C CNN
-F 1 "+3.3V" H 1350 2110 30  0000 C CNN
-F 2 "" H 1350 2000 60  0000 C CNN
-F 3 "" H 1350 2000 60  0000 C CNN
-	1    1350 2000
-	1    0    0    -1  
-$EndComp
 Text HLabel 5850 3250 2    60   Output ~ 0
 USB_POWER
 $Comp
@@ -146,8 +108,6 @@ F 3 "~" H 2250 2750 30  0000 C CNN
 	1    2250 2750
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	2250 3000 2250 3250
 $Comp
 L R R7
 U 1 1 5395CE96
@@ -159,24 +119,17 @@ F 3 "~" H 1450 2500 30  0000 C CNN
 	1    1450 2500
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	1250 2250 2250 2250
-Wire Wire Line
-	2250 2250 2250 2500
-Connection ~ 1450 2250
 $Comp
-L GND #PWR081
+L GND #PWR079
 U 1 1 5395CECD
 P 1450 2850
-F 0 "#PWR081" H 1450 2850 30  0001 C CNN
+F 0 "#PWR079" H 1450 2850 30  0001 C CNN
 F 1 "GND" H 1450 2780 30  0001 C CNN
 F 2 "" H 1450 2850 60  0000 C CNN
 F 3 "" H 1450 2850 60  0000 C CNN
 	1    1450 2850
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	1450 2850 1450 2750
 $Comp
 L R R9
 U 1 1 5395D182
@@ -188,69 +141,27 @@ F 3 "~" H 5200 2750 30  0000 C CNN
 	1    5200 2750
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	5200 2500 5200 2400
-$Comp
-L +3.3V #PWR082
-U 1 1 5395D1C1
-P 5200 1850
-F 0 "#PWR082" H 5200 1810 30  0001 C CNN
-F 1 "+3.3V" H 5200 1960 30  0000 C CNN
-F 2 "" H 5200 1850 60  0000 C CNN
-F 3 "" H 5200 1850 60  0000 C CNN
-	1    5200 1850
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	5200 1850 5200 2000
-Wire Wire Line
-	5200 3000 5200 3550
 Text HLabel 5850 3100 2    60   Input ~ 0
 USB_DISC
 $Comp
-L GND #PWR083
+L GND #PWR080
 U 1 1 5395D488
 P 2650 3250
-F 0 "#PWR083" H 2650 3250 30  0001 C CNN
+F 0 "#PWR080" H 2650 3250 30  0001 C CNN
 F 1 "GND" H 2650 3180 30  0001 C CNN
 F 2 "" H 2650 3250 60  0000 C CNN
 F 3 "" H 2650 3250 60  0000 C CNN
 	1    2650 3250
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	2650 3250 2650 3150
-Wire Wire Line
-	2650 3150 2800 3150
-Wire Wire Line
-	2800 3100 2800 3300
-$Comp
-L +3.3V #PWR084
-U 1 1 5395D4AB
-P 3900 3100
-F 0 "#PWR084" H 3900 3060 30  0001 C CNN
-F 1 "+3.3V" H 3900 3210 30  0000 C CNN
-F 2 "" H 3900 3100 60  0000 C CNN
-F 3 "" H 3900 3100 60  0000 C CNN
-	1    3900 3100
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	3900 3100 3900 3300
-Wire Wire Line
-	4500 3400 5850 3400
 Text Label 1250 2250 0    60   ~ 0
 USB_POWER
 Text Label 5750 3250 2    60   ~ 0
 USB_POWER
-Wire Wire Line
-	5750 3250 5850 3250
 Text HLabel 5850 3550 2    60   BiDi ~ 0
 USB_DP
 Text HLabel 5850 3400 2    60   BiDi ~ 0
 USB_DM
-Wire Wire Line
-	4500 3550 5850 3550
 $Comp
 L C C12
 U 1 1 5395D7E9
@@ -262,17 +173,6 @@ F 3 "~" H 3350 3100 60  0000 C CNN
 	1    3350 3100
 	0    -1   -1   0   
 $EndComp
-Wire Wire Line
-	3550 3100 3900 3100
-Wire Wire Line
-	2800 3100 3150 3100
-Connection ~ 2800 3150
-Wire Wire Line
-	5750 3100 5850 3100
-Wire Wire Line
-	5550 2200 5750 2200
-Wire Wire Line
-	5750 2200 5750 3100
 $Comp
 L R R35
 U 1 1 5395E223
@@ -295,13 +195,6 @@ F 3 "~" H 4250 3550 30  0000 C CNN
 	1    4250 3550
 	0    -1   -1   0   
 $EndComp
-Wire Wire Line
-	3900 3400 4000 3400
-Wire Wire Line
-	3900 3500 4000 3500
-Wire Wire Line
-	4000 3500 4000 3550
-Connection ~ 5200 3550
 $Comp
 L DIODESCH D3
 U 1 1 539B75AF
@@ -313,19 +206,10 @@ F 3 "~" H 2500 2750 60  0000 C CNN
 	1    2500 2750
 	0    -1   -1   0   
 $EndComp
-Wire Wire Line
-	2250 3100 2500 3100
-Wire Wire Line
-	2500 3100 2500 2950
-Connection ~ 2250 3100
-Wire Wire Line
-	2500 2550 2500 2450
 Text Label 2500 2450 0    60   ~ 0
 USB_+5V
 Text Label 5750 3750 2    60   ~ 0
 USB_+5V
-Wire Wire Line
-	5750 3750 5850 3750
 Text HLabel 5850 3750 2    61   Output ~ 0
 USB_+5V
 $Comp
@@ -339,4 +223,88 @@ F 3 "~" H 1700 3550 60  0000 C CNN
 	1    1700 3550
 	-1   0    0    -1  
 $EndComp
+Wire Wire Line
+	1150 3250 1150 4150
+Connection ~ 1150 3400
+Connection ~ 1150 3700
+Wire Wire Line
+	1250 1550 1300 1550
+Wire Wire Line
+	1300 1550 1300 1700
+Connection ~ 1150 3850
+Wire Wire Line
+	1150 4150 2250 4150
+Wire Wire Line
+	1650 4150 1650 4200
+Wire Wire Line
+	2250 4150 2250 3700
+Connection ~ 1650 4150
+Connection ~ 2250 3850
+Wire Wire Line
+	2250 3400 2800 3400
+Wire Wire Line
+	2250 3550 2800 3550
+Wire Wire Line
+	2800 3550 2800 3500
+Wire Wire Line
+	2250 3000 2250 3250
+Wire Wire Line
+	1250 2250 2250 2250
+Wire Wire Line
+	2250 2250 2250 2500
+Connection ~ 1450 2250
+Wire Wire Line
+	1450 2850 1450 2750
+Wire Wire Line
+	5200 2500 5200 2400
+Wire Wire Line
+	5200 3000 5200 3550
+Wire Wire Line
+	2650 3250 2650 3150
+Wire Wire Line
+	2650 3150 2800 3150
+Wire Wire Line
+	2800 3100 2800 3300
+Wire Wire Line
+	4500 3400 5850 3400
+Wire Wire Line
+	5750 3250 5850 3250
+Wire Wire Line
+	4500 3550 5850 3550
+Wire Wire Line
+	3550 3100 3900 3100
+Wire Wire Line
+	2800 3100 3150 3100
+Connection ~ 2800 3150
+Wire Wire Line
+	5750 3100 5850 3100
+Wire Wire Line
+	5550 2200 5750 2200
+Wire Wire Line
+	5750 2200 5750 3100
+Wire Wire Line
+	3900 3400 4000 3400
+Wire Wire Line
+	3900 3500 4000 3500
+Wire Wire Line
+	4000 3500 4000 3550
+Connection ~ 5200 3550
+Wire Wire Line
+	2250 3100 2500 3100
+Wire Wire Line
+	2500 3100 2500 2950
+Connection ~ 2250 3100
+Wire Wire Line
+	2500 2550 2500 2450
+Wire Wire Line
+	5750 3750 5850 3750
+Wire Wire Line
+	3900 2500 2500 2500
+Connection ~ 2500 2500
+Connection ~ 3900 2500
+Wire Wire Line
+	5200 2000 3900 2000
+Wire Wire Line
+	3900 2000 3900 3300
+Connection ~ 3900 3100
 $EndSCHEMATC

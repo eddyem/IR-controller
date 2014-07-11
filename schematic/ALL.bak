@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Ср 09 июл 2014 18:33:57
+EESchema Schematic File Version 2  date Пт 11 июл 2014 12:27:24
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -41,7 +41,7 @@ $Descr A3 16535 11693
 encoding utf-8
 Sheet 1 12
 Title "IR-spectrometer Control System"
-Date "9 jul 2014"
+Date "11 jul 2014"
 Rev ""
 Comp "SAO RAS"
 Comment1 ""
@@ -568,7 +568,7 @@ F9 "Hall[0..9]" I L 6300 3850 60
 F10 "EP[0..3]" I L 6300 5150 60 
 F11 "POW[0..3]" O L 6300 6050 60 
 F12 "ADC[0..7]" I R 8100 2750 60 
-F13 "DG_FEEDBACK" I L 6300 6600 60 
+F13 "POW3_FEEDBACK" I L 6300 6600 60 
 F14 "SHTR" O L 6300 6250 60 
 F15 "SHTR_FB" I L 6300 6400 60 
 $EndSheet

@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Ср 09 июл 2014 18:42:33
+EESchema Schematic File Version 2  date Пт 11 июл 2014 12:31:03
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -41,7 +41,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 5 12
 Title "RS-232 level converter"
-Date "9 jul 2014"
+Date "11 jul 2014"
 Rev ""
 Comp "SAO RAS"
 Comment1 ""
@@ -54,10 +54,10 @@ Text HLabel 1550 1900 0    60   Input ~ 0
 Text HLabel 1550 2100 0    60   Input ~ 0
 GND
 $Comp
-L GND #PWR085
+L GND #PWR081
 U 1 1 53974EEB
 P 1600 2200
-F 0 "#PWR085" H 1600 2200 30  0001 C CNN
+F 0 "#PWR081" H 1600 2200 30  0001 C CNN
 F 1 "GND" H 1600 2130 30  0001 C CNN
 F 2 "" H 1600 2200 60  0000 C CNN
 F 3 "" H 1600 2200 60  0000 C CNN
@@ -73,10 +73,10 @@ Wire Wire Line
 Wire Wire Line
 	1600 1900 1600 1850
 $Comp
-L GND #PWR086
+L GND #PWR082
 U 1 1 53975227
 P 5250 3400
-F 0 "#PWR086" H 5250 3400 30  0001 C CNN
+F 0 "#PWR082" H 5250 3400 30  0001 C CNN
 F 1 "GND" H 5250 3330 30  0001 C CNN
 F 2 "" H 5250 3400 60  0000 C CNN
 F 3 "" H 5250 3400 60  0000 C CNN
@@ -151,10 +151,10 @@ Wire Wire Line
 	1750 3100 1750 3950
 Connection ~ 1750 3950
 $Comp
-L +5V #PWR087
+L +5V #PWR083
 U 1 1 53A48DE6
 P 1600 1850
-F 0 "#PWR087" H 1600 1940 20  0001 C CNN
+F 0 "#PWR083" H 1600 1940 20  0001 C CNN
 F 1 "+5V" H 1600 1940 30  0000 C CNN
 F 2 "" H 1600 1850 60  0000 C CNN
 F 3 "" H 1600 1850 60  0000 C CNN
@@ -189,10 +189,10 @@ Wire Wire Line
 	2850 2550 2850 2600
 Connection ~ 2950 2550
 $Comp
-L GND #PWR088
+L GND #PWR084
 U 1 1 53A4A7BE
 P 2850 2600
-F 0 "#PWR088" H 2850 2600 30  0001 C CNN
+F 0 "#PWR084" H 2850 2600 30  0001 C CNN
 F 1 "GND" H 2850 2530 30  0001 C CNN
 F 2 "" H 2850 2600 60  0000 C CNN
 F 3 "" H 2850 2600 60  0000 C CNN
@@ -200,10 +200,10 @@ F 3 "" H 2850 2600 60  0000 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L +5V #PWR089
+L +5V #PWR085
 U 1 1 53A4A7C4
 P 2950 2250
-F 0 "#PWR089" H 2950 2340 20  0001 C CNN
+F 0 "#PWR085" H 2950 2340 20  0001 C CNN
 F 1 "+5V" H 2950 2340 30  0000 C CNN
 F 2 "" H 2950 2250 60  0000 C CNN
 F 3 "" H 2950 2250 60  0000 C CNN
@@ -215,7 +215,7 @@ Wire Wire Line
 Text Notes 6700 2300 0    100  ~ 0
 DB9 pinout:\n1 - Data carrier detect\n2 - Receive data\n3 - Transmit data\n4 - Data terminal ready\n5 - Signal ground\n6 - Data set ready\n7 - Request to send\n8 - Clear to send\n9 - Ring indicator
 Text Notes 5300 2250 0    60   ~ 0
-Main UART
+Main UART (socket)
 NoConn ~ 5250 3200
 NoConn ~ 5250 2800
 NoConn ~ 5250 3000
@@ -224,10 +224,10 @@ Wire Wire Line
 	5250 3400 5250 3300
 NoConn ~ 5250 2500
 $Comp
-L GND #PWR090
+L GND #PWR086
 U 1 1 53AB443D
 P 5250 4800
-F 0 "#PWR090" H 5250 4800 30  0001 C CNN
+F 0 "#PWR086" H 5250 4800 30  0001 C CNN
 F 1 "GND" H 5250 4730 30  0001 C CNN
 F 2 "" H 5250 4800 60  0000 C CNN
 F 3 "" H 5250 4800 60  0000 C CNN
@@ -247,7 +247,7 @@ F 3 "" H 5700 4300 60  0000 C CNN
 $EndComp
 NoConn ~ 5250 4000
 Text Notes 5300 3650 0    60   ~ 0
-Reserved UART
+Reserved UART (plug)
 NoConn ~ 5250 4600
 NoConn ~ 5250 4200
 NoConn ~ 5250 4400
