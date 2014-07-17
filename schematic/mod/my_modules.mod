@@ -1,0 +1,1 @@
+/home/eddy/kicad/my_modules.mod
