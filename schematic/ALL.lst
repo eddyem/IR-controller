@@ -1,4 +1,4 @@
-eeschema (2013-feb-26)-stable  >> Creation date: Пт 11 июл 2014 12:31:17
+eeschema (2013-feb-26)-stable  >> Creation date: Пт 18 июл 2014 12:37:10
 #Cmp ( order = Reference )
 | C4         2200u, 40V  
 | C5         10u         
@@ -31,43 +31,20 @@ eeschema (2013-feb-26)-stable  >> Creation date: Пт 11 июл 2014 12:31:17
 | C3.4       1n          
 | C3.5       1n          
 | CON1       USB-MICRO-B 
-| D1         B120-E3     
-| D2         PWR         
-| D3         B120-E3     
-| IC1        ADM233L     
-| IC2.1      L6208N      
-| IC2.2      L6208N      
-| IC2.3      L6208N      
-| IC2.4      L6208N      
-| IC2.5      L6208N      
-| J1         DB9         
-| J2         DB9         
-| K1         CONN_3      
+| DA1        IPS5451     
+| DA2        TLE5205     
+| DA4        USBLC6-2    
+| DA5        RO-1224     
+| DA6        LM1117MPX-3.3
+| DD1        ADM233L     
+| DD3        STM32F103   
+| DD2.1      L6208N      
+| DD2.2      L6208N      
+| DD2.3      L6208N      
+| DD2.4      L6208N      
+| DD2.5      L6208N      
+| G1         8MHz        
 | L1         BMB2A0300AN1
-| P1         CONN_2      
-| P2         CONN_4      
-| P3         CONN_4      
-| P4         CONN_4      
-| P5         CONN_4      
-| P6         CONN_4      
-| P7         CONN_2      
-| P8         CONN_2      
-| P9         CONN_2      
-| P10        TRD         
-| P11        CONN_7      
-| P12        CONN_12     
-| P13        CONN_5      
-| P14        CONN_2      
-| P15        CONN_4      
-| P16        CONN_7      
-| P17        CONN_2      
-| P18        CONN_2      
-| P19        CONN_2      
-| Q1         DTA114Y     
-| Q2         8MHz        
-| Q3         RO-1224     
-| Qp1.1      NTE2984     
-| Qp1.2      NTE2984     
 | R7         22k         
 | R8         15k         
 | R9         1.5k        
@@ -121,6 +98,8 @@ eeschema (2013-feb-26)-stable  >> Creation date: Пт 11 июл 2014 12:31:17
 | R4.3       1.8k        
 | R4.4       1.8k        
 | R4.5       1.8k        
+| R40.1      68          
+| R40.2      68          
 | R5.1       51k         
 | R5.2       51k         
 | R5.3       51k         
@@ -131,13 +110,22 @@ eeschema (2013-feb-26)-stable  >> Creation date: Пт 11 июл 2014 12:31:17
 | R6.3       51k         
 | R6.4       51k         
 | R6.5       51k         
-| SW1        RESET       
-| SW2        BOOT        
-| U1         IPS5451     
-| U2         TLE5205     
-| U3         STM32F103   
-| U4         USBLC6-2    
-| U5         LM1117MPX-3.3
+| SB1        RESET       
+| SB2        BOOT        
+| VD1        B120-E3     
+| VD2        PWR         
+| VD3        B120-E3     
+| VT1        DTA114Y     
+| VT2.1      NTE2984     
+| VT2.2      NTE2984     
+| XP1        GPRM1-61    
+| XP2        TRD         
+| XP3        CONN_7      
+| XP4        CONN_4      
+| XP5        CONN_7      
+| XP6        DB9         
+| XP7        Power       
+| XS1        DB9         
 #End Cmp
 
 #Cmp ( order = Value )
@@ -172,43 +160,20 @@ eeschema (2013-feb-26)-stable  >> Creation date: Пт 11 июл 2014 12:31:17
 | 100u         C6        
 | 2200u, 40V   C4        
 | USB-MICRO-B  CON1      
-| B120-E3      D1        
-| B120-E3      D3        
-| PWR          D2        
-| ADM233L      IC1       
-| L6208N       IC2.1     
-| L6208N       IC2.2     
-| L6208N       IC2.3     
-| L6208N       IC2.4     
-| L6208N       IC2.5     
-| DB9          J1        
-| DB9          J2        
-| CONN_3       K1        
+| RO-1224      DA5       
+| LM1117MPX-3.3 DA6       
+| USBLC6-2     DA4       
+| IPS5451      DA1       
+| TLE5205      DA2       
+| ADM233L      DD1       
+| L6208N       DD2.1     
+| L6208N       DD2.2     
+| L6208N       DD2.3     
+| L6208N       DD2.4     
+| L6208N       DD2.5     
+| STM32F103    DD3       
+| 8MHz         G1        
 | BMB2A0300AN1 L1        
-| CONN_12      P12       
-| CONN_2       P7        
-| CONN_2       P17       
-| CONN_2       P1        
-| CONN_2       P8        
-| CONN_2       P9        
-| CONN_2       P14       
-| CONN_2       P18       
-| CONN_2       P19       
-| CONN_4       P15       
-| CONN_4       P2        
-| CONN_4       P3        
-| CONN_4       P4        
-| CONN_4       P5        
-| CONN_4       P6        
-| CONN_5       P13       
-| CONN_7       P11       
-| CONN_7       P16       
-| TRD          P10       
-| 8MHz         Q2        
-| RO-1224      Q3        
-| DTA114Y      Q1        
-| NTE2984      Qp1.1     
-| NTE2984      Qp1.2     
 | 0.33         R1.1      
 | 0.33         R1.2      
 | 0.33         R1.3      
@@ -221,6 +186,8 @@ eeschema (2013-feb-26)-stable  >> Creation date: Пт 11 июл 2014 12:31:17
 | 0.33         R2.5      
 | 22           R35       
 | 22           R36       
+| 68           R40.1     
+| 68           R40.2     
 | 510          R10       
 | 1.5k         R9        
 | 1.8k         R4.1      
@@ -272,22 +239,31 @@ eeschema (2013-feb-26)-stable  >> Creation date: Пт 11 июл 2014 12:31:17
 | RT0805BRB071KL R32       
 | RT0805BRB071KL R33       
 | RT0805BRB071KL R34       
-| RESET        SW1       
-| BOOT         SW2       
-| STM32F103    U3        
-| LM1117MPX-3.3 U5        
-| USBLC6-2     U4        
-| IPS5451      U1        
-| TLE5205      U2        
+| RESET        SB1       
+| BOOT         SB2       
+| B120-E3      VD1       
+| B120-E3      VD3       
+| PWR          VD2       
+| DTA114Y      VT1       
+| NTE2984      VT2.1     
+| NTE2984      VT2.2     
+| DB9          XP6       
+| GPRM1-61     XP1       
+| CONN_4       XP4       
+| CONN_7       XP3       
+| CONN_7       XP5       
+| TRD          XP2       
+| Power        XP7       
+| DB9          XS1       
 #End Cmp
 
-#Global, Hierarchical Labels and PinSheets ( order = Alphab. ) count = 188
+#Global, Hierarchical Labels and PinSheets ( order = Alphab. ) count = 190
 
 > +10V                         PinSheet Input   Loc /(X=12.700 ", Y=7.750 ")
-> +10V                         PinSheet Input   Loc /(X=12.750 ", Y=6.000 ")
 > +10V                         PinSheet Input   Loc /(X=12.750 ", Y=4.250 ")
-> +10V                         PinSheet Input   Loc /(X=12.700 ", Y=9.400 ")
+> +10V                         PinSheet Input   Loc /(X=12.750 ", Y=6.000 ")
 > +10V                         PinSheet Input   Loc /(X=12.750 ", Y=2.550 ")
+> +10V                         PinSheet Input   Loc /(X=12.700 ", Y=9.400 ")
 > +10V                         Hierarchical        Loc /Filters slit #2/(X=2.700 ", Y=2.300 ")
 > +10V                         Hierarchical        Loc /Filters slit #1/(X=2.700 ", Y=2.300 ")
 > +10V                         Hierarchical        Loc /Turret slits/(X=2.700 ", Y=2.300 ")
@@ -295,9 +271,9 @@ eeschema (2013-feb-26)-stable  >> Creation date: Пт 11 июл 2014 12:31:17
 > +10V                         Hierarchical        Loc /Long stage/(X=2.700 ", Y=2.300 ")
 > +24V                         PinSheet Input   Loc /(X=12.700 ", Y=7.600 ")
 > +24V                         PinSheet Input   Loc /(X=12.750 ", Y=5.850 ")
+> +24V                         PinSheet Input   Loc /(X=12.700 ", Y=9.250 ")
 > +24V                         PinSheet Input   Loc /(X=12.750 ", Y=2.400 ")
 > +24V                         PinSheet Input   Loc /(X=12.750 ", Y=4.100 ")
-> +24V                         PinSheet Input   Loc /(X=12.700 ", Y=9.250 ")
 > +24V                         Hierarchical        Loc /Filters slit #2/(X=2.700 ", Y=2.500 ")
 > +24V                         Hierarchical        Loc /Filters slit #1/(X=2.700 ", Y=2.500 ")
 > +24V                         Hierarchical        Loc /Turret slits/(X=2.700 ", Y=2.500 ")
@@ -311,10 +287,10 @@ eeschema (2013-feb-26)-stable  >> Creation date: Пт 11 июл 2014 12:31:17
 > +5V                          Hierarchical        Loc /STM32F103 module/RS-232 level converter/(X=1.550 ", Y=1.900 ")
 > 1-WIRE                       PinSheet BiDi    Loc /(X=6.300 ", Y=3.450 ")
 > 1-WIRE                       Hierarchical        Loc /STM32F103 module/(X=1.600 ", Y=4.550 ")
-> A                            PinSheet Output  Loc /(X=13.750 ", Y=1.800 ")
-> A                            PinSheet Output  Loc /(X=13.700 ", Y=8.650 ")
 > A                            PinSheet Output  Loc /(X=13.750 ", Y=5.250 ")
+> A                            PinSheet Output  Loc /(X=13.700 ", Y=8.650 ")
 > A                            PinSheet Output  Loc /(X=13.750 ", Y=3.500 ")
+> A                            PinSheet Output  Loc /(X=13.750 ", Y=1.800 ")
 > A                            PinSheet Output  Loc /(X=13.700 ", Y=7.000 ")
 > A                            Hierarchical        Loc /Filters slit #2/(X=5.950 ", Y=3.550 ")
 > A                            Hierarchical        Loc /Filters slit #1/(X=5.950 ", Y=3.550 ")
@@ -323,9 +299,9 @@ eeschema (2013-feb-26)-stable  >> Creation date: Пт 11 июл 2014 12:31:17
 > A                            Hierarchical        Loc /Long stage/(X=5.950 ", Y=3.550 ")
 > A*                           PinSheet Output  Loc /(X=13.700 ", Y=8.800 ")
 > A*                           PinSheet Output  Loc /(X=13.750 ", Y=3.650 ")
-> A*                           PinSheet Output  Loc /(X=13.750 ", Y=1.950 ")
-> A*                           PinSheet Output  Loc /(X=13.700 ", Y=7.150 ")
 > A*                           PinSheet Output  Loc /(X=13.750 ", Y=5.400 ")
+> A*                           PinSheet Output  Loc /(X=13.700 ", Y=7.150 ")
+> A*                           PinSheet Output  Loc /(X=13.750 ", Y=1.950 ")
 > A*                           Hierarchical        Loc /Filters slit #2/(X=5.950 ", Y=3.650 ")
 > A*                           Hierarchical        Loc /Filters slit #1/(X=5.950 ", Y=3.650 ")
 > A*                           Hierarchical        Loc /Turret slits/(X=5.950 ", Y=3.650 ")
@@ -333,21 +309,23 @@ eeschema (2013-feb-26)-stable  >> Creation date: Пт 11 июл 2014 12:31:17
 > A*                           Hierarchical        Loc /Long stage/(X=5.950 ", Y=3.650 ")
 > ADC[0..7]                    PinSheet Input   Loc /(X=8.100 ", Y=2.750 ")
 > ADC[0..7]                    Hierarchical        Loc /STM32F103 module/(X=1.550 ", Y=4.200 ")
-> B                            PinSheet Output  Loc /(X=13.700 ", Y=7.500 ")
+> AGND                         PinSheet Output  Loc /(X=8.100 ", Y=3.000 ")
+> AGND                         Hierarchical        Loc /STM32F103 module/(X=1.550 ", Y=4.050 ")
 > B                            PinSheet Output  Loc /(X=13.700 ", Y=9.150 ")
-> B                            PinSheet Output  Loc /(X=13.750 ", Y=4.000 ")
+> B                            PinSheet Output  Loc /(X=13.700 ", Y=7.500 ")
 > B                            PinSheet Output  Loc /(X=13.750 ", Y=5.750 ")
+> B                            PinSheet Output  Loc /(X=13.750 ", Y=4.000 ")
 > B                            PinSheet Output  Loc /(X=13.750 ", Y=2.300 ")
 > B                            Hierarchical        Loc /Filters slit #2/(X=5.950 ", Y=3.750 ")
 > B                            Hierarchical        Loc /Filters slit #1/(X=5.950 ", Y=3.750 ")
 > B                            Hierarchical        Loc /Turret slits/(X=5.950 ", Y=3.750 ")
 > B                            Hierarchical        Loc /Short stage/(X=5.950 ", Y=3.750 ")
 > B                            Hierarchical        Loc /Long stage/(X=5.950 ", Y=3.750 ")
-> B*                           PinSheet Output  Loc /(X=13.750 ", Y=2.150 ")
 > B*                           PinSheet Output  Loc /(X=13.750 ", Y=5.600 ")
-> B*                           PinSheet Output  Loc /(X=13.700 ", Y=9.000 ")
-> B*                           PinSheet Output  Loc /(X=13.700 ", Y=7.350 ")
 > B*                           PinSheet Output  Loc /(X=13.750 ", Y=3.850 ")
+> B*                           PinSheet Output  Loc /(X=13.700 ", Y=9.000 ")
+> B*                           PinSheet Output  Loc /(X=13.750 ", Y=2.150 ")
+> B*                           PinSheet Output  Loc /(X=13.700 ", Y=7.350 ")
 > B*                           Hierarchical        Loc /Filters slit #2/(X=5.950 ", Y=3.850 ")
 > B*                           Hierarchical        Loc /Filters slit #1/(X=5.950 ", Y=3.850 ")
 > B*                           Hierarchical        Loc /Turret slits/(X=5.950 ", Y=3.850 ")
@@ -361,12 +339,12 @@ eeschema (2013-feb-26)-stable  >> Creation date: Пт 11 июл 2014 12:31:17
 > EN[1..5]                     Hierarchical        Loc /STM32F103 module/(X=1.550 ", Y=6.200 ")
 > EP[0..3]                     PinSheet Input   Loc /(X=6.300 ", Y=5.150 ")
 > EP[0..3]                     Hierarchical        Loc /STM32F103 module/(X=1.550 ", Y=9.100 ")
-> GND                          PinSheet Input   Loc /(X=6.300 ", Y=3.050 ")
 > GND                          PinSheet Input   Loc /(X=4.750 ", Y=8.550 ")
 > GND                          PinSheet Input   Loc /(X=4.750 ", Y=10.100 ")
 > GND                          PinSheet Input   Loc /(X=4.750 ", Y=9.300 ")
-> GND                          PinSheet Input   Loc /STM32F103 module/(X=3.250 ", Y=10.450 ")
+> GND                          PinSheet Input   Loc /(X=6.300 ", Y=3.050 ")
 > GND                          PinSheet Input   Loc /STM32F103 module/(X=0.950 ", Y=10.800 ")
+> GND                          PinSheet Input   Loc /STM32F103 module/(X=3.250 ", Y=10.450 ")
 > GND                          Hierarchical        Loc /STM32F103 module/(X=3.850 ", Y=1.200 ")
 > GND                          Hierarchical        Loc /Power MOSFET module 1/(X=3.200 ", Y=2.800 ")
 > GND                          Hierarchical        Loc /Power MOSFET module 2/(X=3.200 ", Y=2.800 ")
@@ -395,10 +373,10 @@ eeschema (2013-feb-26)-stable  >> Creation date: Пт 11 июл 2014 12:31:17
 > POW3_FEEDBACK                Hierarchical        Loc /STM32F103 module/(X=1.600 ", Y=3.500 ")
 > POW[0..3]                    PinSheet Output  Loc /(X=6.300 ", Y=6.050 ")
 > POW[0..3]                    Hierarchical        Loc /STM32F103 module/(X=1.600 ", Y=3.300 ")
-> PWR_GND                      PinSheet Input   Loc /(X=12.700 ", Y=9.550 ")
+> PWR_GND                      PinSheet Input   Loc /(X=12.750 ", Y=2.700 ")
 > PWR_GND                      PinSheet Input   Loc /(X=12.750 ", Y=6.150 ")
 > PWR_GND                      PinSheet Input   Loc /(X=12.750 ", Y=4.400 ")
-> PWR_GND                      PinSheet Input   Loc /(X=12.750 ", Y=2.700 ")
+> PWR_GND                      PinSheet Input   Loc /(X=12.700 ", Y=9.550 ")
 > PWR_GND                      PinSheet Input   Loc /(X=12.700 ", Y=7.900 ")
 > PWR_GND                      Hierarchical        Loc /Filters slit #2/(X=2.700 ", Y=2.900 ")
 > PWR_GND                      Hierarchical        Loc /Filters slit #1/(X=2.700 ", Y=2.900 ")
@@ -421,8 +399,8 @@ eeschema (2013-feb-26)-stable  >> Creation date: Пт 11 июл 2014 12:31:17
 > SM_5V                        Hierarchical        Loc /Long stage/(X=2.700 ", Y=2.750 ")
 > SM_CLK                       PinSheet Input   Loc /(X=12.700 ", Y=7.050 ")
 > SM_CLK                       PinSheet Input   Loc /(X=12.750 ", Y=1.850 ")
-> SM_CLK                       PinSheet Input   Loc /(X=12.700 ", Y=8.700 ")
 > SM_CLK                       PinSheet Input   Loc /(X=12.750 ", Y=5.300 ")
+> SM_CLK                       PinSheet Input   Loc /(X=12.700 ", Y=8.700 ")
 > SM_CLK                       PinSheet Input   Loc /(X=12.750 ", Y=3.550 ")
 > SM_CLK                       Hierarchical        Loc /Filters slit #2/(X=2.700 ", Y=3.350 ")
 > SM_CLK                       Hierarchical        Loc /Filters slit #1/(X=2.700 ", Y=3.350 ")
@@ -441,8 +419,8 @@ eeschema (2013-feb-26)-stable  >> Creation date: Пт 11 июл 2014 12:31:17
 > SM_DIR                       Hierarchical        Loc /Long stage/(X=2.700 ", Y=3.450 ")
 > SM_EN                        PinSheet Input   Loc /(X=12.700 ", Y=7.350 ")
 > SM_EN                        PinSheet Input   Loc /(X=12.750 ", Y=3.850 ")
-> SM_EN                        PinSheet Input   Loc /(X=12.700 ", Y=9.000 ")
 > SM_EN                        PinSheet Input   Loc /(X=12.750 ", Y=2.150 ")
+> SM_EN                        PinSheet Input   Loc /(X=12.700 ", Y=9.000 ")
 > SM_EN                        PinSheet Input   Loc /(X=12.750 ", Y=5.600 ")
 > SM_EN                        Hierarchical        Loc /Filters slit #2/(X=2.750 ", Y=4.050 ")
 > SM_EN                        Hierarchical        Loc /Filters slit #1/(X=2.750 ", Y=4.050 ")

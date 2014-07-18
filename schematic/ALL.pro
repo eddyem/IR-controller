@@ -1,4 +1,4 @@
-update=Ср 09 июл 2014 18:27:16
+update=Ср 16 июл 2014 14:03:06
 version=1
 last_client=pcbnew
 [cvpcb]
@@ -56,9 +56,9 @@ LibName35=open-project
 version=1
 LastNetListRead=ALL.net
 UseCmpFile=1
-PadDrill=1
-PadSizeH=5.08
-PadSizeV=5.08
+PadDrill=0
+PadSizeH=2
+PadSizeV=2.5
 PcbTextSizeV=1.5
 PcbTextSizeH=1.5
 PcbTextThickness=0.3
@@ -71,7 +71,7 @@ DrawSegmentWidth=0.4
 BoardOutlineThickness=0.3
 ModuleOutlineThickness=0.3
 [pcbnew/libraries]
-LibDir=/home/eddy/kicad;/home/eddy/kicad/CYB3R_from_LOR/kicad;/home/eddy/kicad/Kicad-Libraries/modules;/home/eddy/kicad/kicadlibrary
+LibDir=/home/eddy/kicad;/home/eddy/kicad/CYB3R_from_LOR/kicad;/home/eddy/kicad/Kicad-Libraries/modules;/home/eddy/kicad/kicadlibrary;mod
 LibName1=sockets
 LibName2=connect
 LibName3=discret
@@ -93,5 +93,7 @@ LibName18=smd
 LibName19=sot
 LibName20=quartz
 LibName21=w_crystal
-LibName22=my_modules
-LibName23=capacitors
+LibName22=capacitors
+LibName23=gprm1-45-61
+LibName24=my_modules
+LibName25=smd_diodes
