@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Пт 18 июл 2014 12:36:52
+EESchema Schematic File Version 2  date Пн 21 июл 2014 09:59:08
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -41,7 +41,7 @@ $Descr A3 16535 11693
 encoding utf-8
 Sheet 1 12
 Title "IR-spectrometer Control System"
-Date "18 jul 2014"
+Date "21 jul 2014"
 Rev ""
 Comp "SAO RAS"
 Comment1 ""

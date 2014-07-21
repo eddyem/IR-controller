@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Пт 18 июл 2014 12:36:52
+EESchema Schematic File Version 2  date Пн 21 июл 2014 09:59:08
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -41,7 +41,7 @@ $Descr A3 16535 11693
 encoding utf-8
 Sheet 3 12
 Title "MCU module on STM32F103"
-Date "18 jul 2014"
+Date "21 jul 2014"
 Rev ""
 Comp "SAO RAS"
 Comment1 ""
@@ -355,7 +355,7 @@ U 1 1 5399B811
 P 7950 1050
 F 0 "SB1" H 8100 1160 50  0000 C CNN
 F 1 "RESET" H 7950 970 50  0000 C CNN
-F 2 "SW_PUSH_SMALL" H 7950 1050 60  0001 C CNN
+F 2 "SPST" H 7950 1050 60  0001 C CNN
 F 3 "~" H 7950 1050 60  0000 C CNN
 	1    7950 1050
 	0    -1   -1   0   
@@ -977,7 +977,7 @@ U 1 1 53A4246E
 P 9200 1050
 F 0 "SB2" H 9350 1160 50  0000 C CNN
 F 1 "BOOT" H 9200 970 50  0000 C CNN
-F 2 "SW_PUSH_SMALL" H 9200 1050 60  0001 C CNN
+F 2 "SPST" H 9200 1050 60  0001 C CNN
 F 3 "~" H 9200 1050 60  0000 C CNN
 	1    9200 1050
 	0    -1   -1   0   

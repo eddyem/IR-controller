@@ -1,4 +1,4 @@
-Cmp-Mod V01 Created by CvPcb (2013-feb-26)-stable date = Ср 16 июл 2014 14:08:29
+Cmp-Mod V01 Created by CvPcb (2013-feb-26)-stable date = Пн 21 июл 2014 09:59:27
 
 BeginCmp
 TimeStamp = /53A910B8/50AF1E60;
@@ -757,17 +757,31 @@ IdModule  = SM0603;
 EndCmp
 
 BeginCmp
+TimeStamp = /53AA0E2D/53C8FF70;
+Reference = R40.1;
+ValeurCmp = 68;
+IdModule  = SM1206;
+EndCmp
+
+BeginCmp
+TimeStamp = /53A8FBFD/53C8FF70;
+Reference = R40.2;
+ValeurCmp = 68;
+IdModule  = SM1206;
+EndCmp
+
+BeginCmp
 TimeStamp = /53973803/5399B811;
 Reference = SB1;
 ValeurCmp = RESET;
-IdModule  = SW_PUSH_SMALL;
+IdModule  = SPST;
 EndCmp
 
 BeginCmp
 TimeStamp = /53973803/53A4246E;
 Reference = SB2;
 ValeurCmp = BOOT;
-IdModule  = SW_PUSH_SMALL;
+IdModule  = SPST;
 EndCmp
 
 BeginCmp
@@ -852,6 +866,13 @@ TimeStamp = /53973803/53974779/53AB4443;
 Reference = XP6;
 ValeurCmp = DB9;
 IdModule  = DB9FC;
+EndCmp
+
+BeginCmp
+TimeStamp = /53CA50BA;
+Reference = XP7;
+ValeurCmp = Power;
+IdModule  = VASCH10x2;
 EndCmp
 
 BeginCmp
