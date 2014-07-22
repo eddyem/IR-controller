@@ -1,0 +1,6 @@
+This is a sketch for futher work
+I found that libopencm3 is more friendly than SPL. Also I have some new thoughts about modular system: for
+flexibility.
+
+The beginning of the work is being done on an Olimex development board "STM32P103", in future I plan
+to complete my own board based on STM32F103VBT6, so linker would be modifying.
