@@ -20,11 +20,14 @@
 
 #include "cdcacm.h"
 #include "user_proto.h"
+#include "main.h"
+#include "uart.h"
 
 // Buffer for USB Tx
 static uint8_t USB_Tx_Buffer[USB_TX_DATA_SIZE];
 static uint8_t USB_Tx_ptr = 0;
-
+// connection flag
+uint8_t USB_connected = 0;
 static const struct usb_device_descriptor dev = {
 	.bLength = USB_DT_DEVICE_SIZE,
 	.bDescriptorType = USB_DT_DEVICE,
@@ -176,6 +179,11 @@ struct usb_cdc_line_coding linecoding = {
 /* Buffer to be used for control requests. */
 uint8_t usbd_control_buffer[128];
 
+/**
+ * This function runs every time it gets a request for control parameters get/set
+ * parameter SET_LINE_CODING used to change USART1 parameters: if you want to
+ * change them, just connect through USB with required parameters
+ */
 static int cdcacm_control_request(usbd_device *usbd_dev, struct usb_setup_data *req, uint8_t **buf,
 		uint16_t *len, void (**complete)(usbd_device *usbd_dev, struct usb_setup_data *req))
 {
@@ -183,9 +191,20 @@ static int cdcacm_control_request(usbd_device *usbd_dev, struct usb_setup_data *
 	(void)buf;
 	(void)usbd_dev;
 	char local_buf[10];
+	struct usb_cdc_line_coding  lc;
 
 	switch (req->bRequest) {
 	case SET_CONTROL_LINE_STATE:{
+//P("SET_CONTROL_LINE_STATE\r\n", uart1_send);
+//print_int(req->wValue, uart1_send);
+//newline(uart1_send);
+		if(req->wValue){ // terminal is opened
+			USB_connected = 1;
+			//P("\r\n\tUSB connected!\r\n", uart1_send);
+		}else{ // terminal is closed
+			USB_connected = 0;
+			//P("\r\n\tUSB disconnected!\r\n", uart1_send);
+		}
 		/*
 		 * This Linux cdc_acm driver requires this to be implemented
 		 * even though it's optional in the CDC spec, and we don't
@@ -203,14 +222,28 @@ static int cdcacm_control_request(usbd_device *usbd_dev, struct usb_setup_data *
 		usbd_ep_write_packet(usbd_dev, 0x83, local_buf, 10);
 	}break;
 	case SET_LINE_CODING:
-		if (*len != sizeof(struct usb_cdc_line_coding))
+//P("SET_LINE_CODING, len=", uart1_send);
+		if (!len || (*len != sizeof(struct usb_cdc_line_coding)))
 			return 0;
-		memcpy((void *)&linecoding, (void *)*buf, *len);
+//print_int(*len, uart1_send);
+//newline(uart1_send);
+		memcpy((void *)&lc, (void *)*buf, *len);
+		// Mark & Space parity don't support by hardware, check it
+		if(lc.bParityType == USB_CDC_MARK_PARITY || lc.bParityType == USB_CDC_SPACE_PARITY){
+			return 0; // error
+		}else{
+			memcpy((void *)&linecoding, (void *)&lc, sizeof(struct usb_cdc_line_coding));
+			UART_setspeed(USART1, &linecoding);
+		}
 	break;
-	case GET_LINE_CODING:
-		usbd_ep_write_packet(usbd_dev, 0x82, (char*)&linecoding, sizeof(linecoding));
+	case GET_LINE_CODING: // return linecoding buffer
+		if(len && *len == sizeof(struct usb_cdc_line_coding))
+			memcpy((void *)*buf, (void *)&linecoding, sizeof(struct usb_cdc_line_coding));
+		//usbd_ep_write_packet(usbd_dev, 0x83, (char*)&linecoding, sizeof(linecoding));
+//P("GET_LINE_CODING\r\n", uart1_send);
 	break;
 	default:
+//P("UNKNOWN\r\n", uart1_send);
 		return 0;
 	}
 	return 1;
@@ -218,10 +251,8 @@ static int cdcacm_control_request(usbd_device *usbd_dev, struct usb_setup_data *
 
 static void cdcacm_data_rx_cb(usbd_device *usbd_dev, uint8_t ep){
 	(void)ep;
-
 	char buf[64];
 	int len = usbd_ep_read_packet(usbd_dev, 0x01, buf, 64);
-
 	if(len > 0) parce_incoming_buf(buf, len, usb_send);
 }
 
@@ -263,12 +294,16 @@ usbd_device *USB_init(){
  * @param byte - a byte to put into a buffer
  */
 void usb_send(uint8_t byte){
-	if(!current_usb) return;
+	//if(!USB_connected) return;
 	USB_Tx_Buffer[USB_Tx_ptr++] = byte;
 	if(USB_Tx_ptr == USB_TX_DATA_SIZE) // buffer can be overflowed - send it!
 		usb_send_buffer();
 }
 
+/**
+ * Send all data in buffer over USB
+ * this function runs when buffer is full or on SysTick
+ */
 void usb_send_buffer(){
 	if(USB_Tx_ptr){
 		if(current_usb)

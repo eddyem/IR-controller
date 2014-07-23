@@ -1,5 +1,5 @@
 /*
- * main.h
+ * hardware_ini.c - functions for HW initialisation
  *
  * Copyright 2014 Edward V. Emelianov <eddy@sao.ru, edward.emelianoff@gmail.com>
  *
@@ -19,21 +19,23 @@
  * MA 02110-1301, USA.
  */
 
+#include "main.h"
+#include "hardware_ini.h"
 
-#pragma once
-#ifndef __MAIN_H__
-#define __MAIN_H__
+/**
+ * GPIO initialisaion: clocking + ports setup
+ */
+void GPIO_init(){
+	rcc_periph_clock_enable(RCC_GPIOC);
+	gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_2_MHZ,
+				GPIO_CNF_OUTPUT_PUSHPULL, GPIO11|GPIO12); // LED + USB
+}
 
-#include <stdlib.h>
-#include <string.h>					// memcpy
-#include <libopencm3/stm32/gpio.h>
-#include <libopencm3/stm32/usart.h>
-#include <libopencm3/cm3/nvic.h>
-#include <libopencm3/usb/cdc.h>
-#include <libopencm3/usb/usbd.h>
-#include <libopencm3/cm3/systick.h>
-#include <libopencm3/stm32/rcc.h>
+void SysTick_init(){
+	systick_set_clocksource(STK_CSR_CLKSOURCE_AHB_DIV8); // Systyck: 72/8=9MHz
+	systick_set_reload(8999); // 9000 pulses: 1kHz
+	systick_interrupt_enable();
+	systick_counter_enable();
+}
 
-#include "user_proto.h"
 
-#endif // __MAIN_H__

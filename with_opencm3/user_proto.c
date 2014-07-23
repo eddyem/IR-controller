@@ -20,7 +20,8 @@
  */
 
 #include "cdcacm.h"
-#include "user_proto.h"
+#include "main.h"
+#include "uart.h"
 
 // integer value given by user
 static volatile int32_t User_value = 0;
@@ -46,15 +47,18 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 	int i = 0;
 	if(Uval_ready == UVAL_START){ // we are in process of user's value reading
 		i += read_int(buf, len);
-	}else{
-		if(Uval_ready == UVAL_ENTERED){
-			print_int(User_value, s); // printout readed integer value for error control
-			Uval_ready = UVAL_PRINTED;
-		}
-		if(I && Uval_ready == UVAL_CHECKED) I(User_value, s);
+	}
+	if(Uval_ready == UVAL_ENTERED){
+		print_int(User_value, s); // printout readed integer value for error control
+		Uval_ready = UVAL_PRINTED;
+	}
+	if(I && Uval_ready == UVAL_CHECKED){
+		Uval_ready = UVAL_BAD; // clear Uval_ready
+		I(User_value, s);
 	}
 	for(; i < len; i++){
 		command = buf[i];
+		if(!command) continue; // omit zero
 		switch (command){
 			case 'b': // turn LED off
 				gpio_set(GPIOC, GPIO12);
@@ -73,6 +77,20 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 			case '-': // user check number value & confirm it's wrong
 				if(Uval_ready == UVAL_PRINTED) Uval_ready = UVAL_BAD;
 				else WRONG_COMMAND();
+			break;
+			case 'u': // check USB connection
+				P("\r\nUSB ", s);
+				if(!USB_connected) P("dis", s);
+				P("connected\r\n",s);
+			break;
+/*
+			case 'U': // test: init USART1
+				UART_init(USART1);
+			break;
+*/
+			case '\n': // show newline as is
+			break;
+			case '\r':
 			break;
 			default:
 				WRONG_COMMAND(); // echo '?' on unknown command

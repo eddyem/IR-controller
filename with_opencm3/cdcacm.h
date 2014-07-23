@@ -23,12 +23,7 @@
 #ifndef __CCDCACM_H__
 #define __CCDCACM_H__
 
-#include <stdlib.h>
-#include <string.h>					// memcpy
-#include <libopencm3/stm32/rcc.h>
-#include <libopencm3/stm32/gpio.h>
 #include <libopencm3/usb/usbd.h>
-#include <libopencm3/usb/cdc.h>
 
 // commands through EP0
 #define SEND_ENCAPSULATED_COMMAND   0x00
@@ -44,6 +39,9 @@
 // Size of buffer to output
 #define USB_TX_DATA_SIZE            64
 
+// USB connection flag
+extern uint8_t USB_connected;
+extern struct usb_cdc_line_coding linecoding;
 
 usbd_device *USB_init();
 void usb_send(uint8_t byte);

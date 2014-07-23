@@ -1,5 +1,5 @@
 /*
- * main.h
+ * uart.h
  *
  * Copyright 2014 Edward V. Emelianov <eddy@sao.ru, edward.emelianoff@gmail.com>
  *
@@ -19,21 +19,19 @@
  * MA 02110-1301, USA.
  */
 
-
 #pragma once
-#ifndef __MAIN_H__
-#define __MAIN_H__
+#ifndef __UART_H__
+#define __UART_H__
 
-#include <stdlib.h>
-#include <string.h>					// memcpy
-#include <libopencm3/stm32/gpio.h>
-#include <libopencm3/stm32/usart.h>
-#include <libopencm3/cm3/nvic.h>
-#include <libopencm3/usb/cdc.h>
-#include <libopencm3/usb/usbd.h>
-#include <libopencm3/cm3/systick.h>
-#include <libopencm3/stm32/rcc.h>
+// Size of buffers
+#define UART_TX_DATA_SIZE            64
 
-#include "user_proto.h"
+void UART_init(uint32_t UART);
+void UART_setspeed(uint32_t UART, struct usb_cdc_line_coding *linecoding);
 
-#endif // __MAIN_H__
+void uart1_send(uint8_t byte);
+void uart2_send(uint8_t byte);
+void uart3_send(uint8_t byte);
+
+
+#endif // __UART_H__

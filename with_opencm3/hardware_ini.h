@@ -1,5 +1,5 @@
 /*
- * main.h
+ * hardware_ini.h
  *
  * Copyright 2014 Edward V. Emelianov <eddy@sao.ru, edward.emelianoff@gmail.com>
  *
@@ -19,21 +19,11 @@
  * MA 02110-1301, USA.
  */
 
-
 #pragma once
-#ifndef __MAIN_H__
-#define __MAIN_H__
+#ifndef __HARDWARE_INI_H__
+#define __HARDWARE_INI_H__
 
-#include <stdlib.h>
-#include <string.h>					// memcpy
-#include <libopencm3/stm32/gpio.h>
-#include <libopencm3/stm32/usart.h>
-#include <libopencm3/cm3/nvic.h>
-#include <libopencm3/usb/cdc.h>
-#include <libopencm3/usb/usbd.h>
-#include <libopencm3/cm3/systick.h>
-#include <libopencm3/stm32/rcc.h>
+void GPIO_init();
+void SysTick_init();
 
-#include "user_proto.h"
-
-#endif // __MAIN_H__
+#endif // __HARDWARE_INI_H__

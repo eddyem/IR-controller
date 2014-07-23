@@ -20,6 +20,9 @@
  */
 
 #include "main.h"
+#include "hardware_ini.h"
+#include "cdcacm.h"
+#include "uart.h"
 
 uint32_t Timer = 0; // global timer (milliseconds)
 
@@ -29,24 +32,27 @@ int main(){
 
 	usbd_device *usbd_dev;
 	//rcc_clock_setup_in_hsi_out_48mhz();
+	// RCC clocking: 8MHz oscillator -> 72MHz system
 	rcc_clock_setup_in_hse_8mhz_out_72mhz();
-	rcc_periph_clock_enable(RCC_GPIOC);
 
-	gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_2_MHZ,
-		      GPIO_CNF_OUTPUT_PUSHPULL, GPIO11|GPIO12);
+	// GPIO
+	GPIO_init();
 	gpio_set(GPIOC, GPIO11); // turn off USB
 	gpio_clear(GPIOC, GPIO12); // turn on LED
 
+	// init USART1
+	UART_init(USART1);
+
+	// USB
 	usbd_dev = USB_init();
 
+	// wait a little and then turn on USB pullup
 	for (i = 0; i < 0x800000; i++)
 		__asm__("nop");
 	gpio_clear(GPIOC, GPIO11);
 
-	systick_set_clocksource(STK_CSR_CLKSOURCE_AHB_DIV8); // Systyck: 72/8=9MHz
-	systick_set_reload(8999); // 9000 pulses: 1kHz
-	systick_interrupt_enable();
-	systick_counter_enable();
+	// SysTick is a system timer with 1mc period
+	SysTick_init();
 
 	while(1){
 		usbd_poll(usbd_dev);
@@ -58,6 +64,9 @@ int main(){
 	}
 }
 
+/**
+ * SysTick interrupt: increment global time & send data buffer through USB
+ */
 void sys_tick_handler(){
 	usb_send_buffer();
 	Timer++;
