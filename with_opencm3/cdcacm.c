@@ -195,9 +195,9 @@ static int cdcacm_control_request(usbd_device *usbd_dev, struct usb_setup_data *
 
 	switch (req->bRequest) {
 	case SET_CONTROL_LINE_STATE:{
-//P("SET_CONTROL_LINE_STATE\r\n", uart1_send);
-//print_int(req->wValue, uart1_send);
-//newline(uart1_send);
+P("SET_CONTROL_LINE_STATE\r\n", uart1_send);
+print_int(req->wValue, uart1_send);
+newline(uart1_send);
 		if(req->wValue){ // terminal is opened
 			USB_connected = 1;
 			//P("\r\n\tUSB connected!\r\n", uart1_send);
@@ -222,11 +222,11 @@ static int cdcacm_control_request(usbd_device *usbd_dev, struct usb_setup_data *
 		usbd_ep_write_packet(usbd_dev, 0x83, local_buf, 10);
 	}break;
 	case SET_LINE_CODING:
-//P("SET_LINE_CODING, len=", uart1_send);
+P("SET_LINE_CODING, len=", uart1_send);
 		if (!len || (*len != sizeof(struct usb_cdc_line_coding)))
 			return 0;
-//print_int(*len, uart1_send);
-//newline(uart1_send);
+print_int(*len, uart1_send);
+newline(uart1_send);
 		memcpy((void *)&lc, (void *)*buf, *len);
 		// Mark & Space parity don't support by hardware, check it
 		if(lc.bParityType == USB_CDC_MARK_PARITY || lc.bParityType == USB_CDC_SPACE_PARITY){
@@ -240,10 +240,10 @@ static int cdcacm_control_request(usbd_device *usbd_dev, struct usb_setup_data *
 		if(len && *len == sizeof(struct usb_cdc_line_coding))
 			memcpy((void *)*buf, (void *)&linecoding, sizeof(struct usb_cdc_line_coding));
 		//usbd_ep_write_packet(usbd_dev, 0x83, (char*)&linecoding, sizeof(linecoding));
-//P("GET_LINE_CODING\r\n", uart1_send);
+P("GET_LINE_CODING\r\n", uart1_send);
 	break;
 	default:
-//P("UNKNOWN\r\n", uart1_send);
+P("UNKNOWN\r\n", uart1_send);
 		return 0;
 	}
 	return 1;

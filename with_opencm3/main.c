@@ -46,13 +46,17 @@ int main(){
 	// USB
 	usbd_dev = USB_init();
 
+	// init ADC
+	ADC_init();
+
+	// SysTick is a system timer with 1mc period
+	SysTick_init();
+
 	// wait a little and then turn on USB pullup
 	for (i = 0; i < 0x800000; i++)
 		__asm__("nop");
 	gpio_clear(GPIOC, GPIO11);
-
-	// SysTick is a system timer with 1mc period
-	SysTick_init();
+	ADC_calibrate_and_start();
 
 	while(1){
 		usbd_poll(usbd_dev);

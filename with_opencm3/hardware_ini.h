@@ -23,7 +23,11 @@
 #ifndef __HARDWARE_INI_H__
 #define __HARDWARE_INI_H__
 
+extern volatile uint16_t ADC_value; // ADC DMA value
+
 void GPIO_init();
 void SysTick_init();
+void ADC_init();
+void ADC_calibrate_and_start();
 
 #endif // __HARDWARE_INI_H__

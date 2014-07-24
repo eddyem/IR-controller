@@ -22,6 +22,7 @@
 #include "cdcacm.h"
 #include "main.h"
 #include "uart.h"
+#include "hardware_ini.h"
 
 // integer value given by user
 static volatile int32_t User_value = 0;
@@ -60,6 +61,12 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 		command = buf[i];
 		if(!command) continue; // omit zero
 		switch (command){
+			case 'A': // show ADC value
+				//adc_start_conversion_direct(ADC1);
+				P("\r\n ADC value: ", s);
+				print_int(ADC_value, s);
+				newline(s);
+			break;
 			case 'b': // turn LED off
 				gpio_set(GPIOC, GPIO12);
 			break;
