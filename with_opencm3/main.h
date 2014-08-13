@@ -35,7 +35,26 @@
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/adc.h>
 #include <libopencm3/stm32/dma.h>
+#include <libopencm3/stm32/spi.h>
 
 #include "user_proto.h"
+#include "AD7794.h"
+
+#define _U_    __attribute__((__unused__))
+#define  U8(x)  ((uint8_t)  x)
+#define U16(x)  ((uint16_t) x)
+#define U32(x)  ((uint32_t) x)
+
+extern uint32_t ad7794_values[]; // array with ADC data
+extern uint8_t doubleconv; // single/double ADC conversion
+extern uint32_t ad7794_on; // ==1 after AD7794 initialisation
+extern uint8_t ADC_monitoring; // ==1 to make continuous monitoring
+void AD7794_init();
+
+extern volatile uint32_t Timer; // global timer (milliseconds)
+void Delay(uint16_t time);
+
+void print_time(sendfun s); // print current time in milliseconds: 4 bytes for ovrvlow + 4 bytes for time
 
 #endif // __MAIN_H__
+

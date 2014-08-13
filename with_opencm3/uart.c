@@ -29,9 +29,11 @@ typedef struct {
 	uint8_t start; // index from where to start reading
 	uint8_t end;   // index from where to start writing
 } UART_buff;
-static UART_buff TX_buffer[3]; // buffers for all three ports
+static UART_buff TX_buffer[3]; // Tx buffers for all three ports
+static UART_buff RX_buffer[3]; // Rx buffers for all three ports
 
 void fill_uart_buff(uint32_t UART, uint8_t byte);
+void fill_uart_RXbuff(uint32_t UART, uint8_t byte);
 
 /**
  * Set UART speed
@@ -40,6 +42,8 @@ void fill_uart_buff(uint32_t UART, uint8_t byte);
 void UART_setspeed(uint32_t UART, struct usb_cdc_line_coding *lc){
 	uint32_t tmp;
 	if(!lc) lc = &linecoding; // default linecoding from cdcacm.c
+	if(!(lc->dwDTERate)) lc->dwDTERate = 115200;
+	if(!(lc->bDataBits)) lc->bDataBits = 8;
 	usart_set_baudrate(UART, lc->dwDTERate);
 	usart_set_databits(UART, lc->bDataBits);
 	switch(lc->bCharFormat){
@@ -128,29 +132,14 @@ void UART_init(uint32_t UART){
 void UART_isr(uint32_t UART){
 	uint8_t bufidx = 0, data;
 	UART_buff *curbuff;
-	sendfun sf = uart1_send;
 	// Check if we were called because of RXNE
 	if(USART_SR(UART) & USART_SR_RXNE){
 		// parce incoming byte
 		data = usart_recv(UART);
-		switch(UART){
-			case USART1:
-				sf = uart1_send;
-			break;
-			case USART2:
-				sf = uart2_send;
-			break;
-			case USART3:
-				sf = uart3_send;
-			break;
-			default: // error - return
-				return;
-		}
-		parce_incoming_buf((char*)&data, 1, sf);
-		//fill_uart_buff(UART, data);
+		fill_uart_RXbuff(UART, data);
 	}
-	// Check if we were called because of TXE
-	if((USART_CR1(USART1) & USART_CR1_TXEIE) && (USART_SR(UART) & USART_SR_TXE)){
+	// Check if we were called because of TXE -> send next byte in buffer
+	if((USART_CR1(UART) & USART_CR1_TXEIE) && (USART_SR(UART) & USART_SR_TXE)){
 		switch(UART){
 			case USART1:
 			bufidx = 0;
@@ -179,7 +168,7 @@ void UART_isr(uint32_t UART){
 		}
 	}
 }
-// particular
+// particular interrupt handlers
 void usart1_isr(){
 	UART_isr(USART1);
 }
@@ -190,10 +179,13 @@ void usart3_isr(){
 	UART_isr(USART3);
 }
 
-// put data into buffer
+// put byte into Tx buffer
 void fill_uart_buff(uint32_t UART, uint8_t byte){
 	UART_buff *curbuff;
 	uint8_t bufidx = 0, endidx;
+	if(!(USART_CR1(UART) & USART_CR1_UE)) return; // UART disabled
+	USART_CR1(UART) &= ~USART_CR1_TXEIE; // disable TX interrupt while buffer filling
+	while ((USART_SR(UART) & USART_SR_TXE) == 0); // wait until last byte send
 	switch(UART){
 		case USART1:
 			bufidx = 0;
@@ -222,7 +214,6 @@ void fill_uart_buff(uint32_t UART, uint8_t byte){
 			}
 		}
 		// overflow: purge all data
-		USART_CR1(UART) &= ~USART_CR1_TXEIE; // disable TX interrupt - all will be done "by hands"
 		bufidx = curbuff->start; // refresh data index
 		for(endidx = bufidx; endidx < UART_TX_DATA_SIZE; endidx++) // first data porion
 			usart_send(UART, curbuff->buf[endidx]);
@@ -236,6 +227,7 @@ void fill_uart_buff(uint32_t UART, uint8_t byte){
 	// enable interrupts to send data from buffer
 	USART_CR1(UART) |= USART_CR1_TXEIE;
 }
+
 /**
  * send data over UART - one function for each uart
  * @param byte - one byte to put in UART queue
@@ -250,3 +242,59 @@ void uart3_send(uint8_t byte){
 	fill_uart_buff(USART3, byte);
 }
 
+/**
+ * Check buffers for non-empty & run parsing function
+ */
+void check_and_parce_UART(){
+	int i;
+	sendfun sf;
+	UART_buff *curbuff;
+	uint8_t datalen; // length of data in buffer - here we use param "end"
+	for(i = 0; i < 3; i++){
+		curbuff = &RX_buffer[i];
+		datalen = curbuff->end;
+		if(!datalen) continue; // buffer is empty
+		// buffer isn't empty: process data in it
+		switch (i){
+			case 0:
+				sf = uart1_send;
+			break;
+			case 1:
+				sf = uart2_send;
+			break;
+			default:
+				sf = uart3_send;
+		}
+		parce_incoming_buf((char*)curbuff->buf, datalen, sf); // process data
+		curbuff->end = 0; // and zero counter
+	}
+}
+
+/**
+ * Fill data in RX buffer to prepare it for further work
+ * we don't use "start" parameter here, it's 0 always
+ * @param UART - device to fill buffer
+ * @param byte - data byte
+ */
+void fill_uart_RXbuff(uint32_t UART, uint8_t byte){
+	UART_buff *curbuff;
+	uint8_t bufidx;
+	switch(UART){
+		case USART1:
+			bufidx = 0;
+		break;
+		case USART2:
+			bufidx = 1;
+		break;
+		case USART3:
+			bufidx = 2;
+		break;
+		default: // error - return
+			return;
+	}
+	curbuff = &RX_buffer[bufidx];
+	if(curbuff->end == UART_TX_DATA_SIZE){ // end of buffer - forget about data
+		return;
+	}
+	curbuff->buf[curbuff->end++] = byte; // put byte into buffer
+}

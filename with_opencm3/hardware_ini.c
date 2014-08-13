@@ -22,7 +22,7 @@
 #include "main.h"
 #include "hardware_ini.h"
 
-volatile uint16_t ADC_value; // ADC DMA value
+volatile uint16_t ADC_value[8]; // ADC DMA value
 
 /**
  * GPIO initialisaion: clocking + ports setup
@@ -31,6 +31,10 @@ void GPIO_init(){
 	rcc_periph_clock_enable(RCC_GPIOC);
 	gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_2_MHZ,
 				GPIO_CNF_OUTPUT_PUSHPULL, GPIO11|GPIO12); // LED + USB
+	// AD7794 addr + en
+	gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_2_MHZ,
+				GPIO_CNF_OUTPUT_PUSHPULL, ADC_ADDR_MASK | GPIO10); // ADDRESS: PC6..9; EN: PC10
+	GPIO_BSRR(GPIOC) = (ADC_ADDR_MASK | GPIO10) << 16; // clear address & disable com
 }
 
 void SysTick_init(){
@@ -44,8 +48,10 @@ void ADC_init(){
 	rcc_peripheral_enable_clock(&RCC_APB2ENR, RCC_APB2ENR_ADC1EN); // enable clocking
 	rcc_periph_clock_enable(RCC_ADC1);
 	rcc_set_adcpre(RCC_CFGR_ADCPRE_PCLK2_DIV4);
-	rcc_periph_clock_enable(RCC_GPIOB); // clocking for ADC port
-	gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO0); // ADC8 - PB0
+	rcc_periph_clock_enable(RCC_GPIOB | RCC_GPIOC); // clocking for ADC ports
+	gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, 3); // ADC8 - PB0, ADC9 -PB1
+	gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, 63); // ADC10-15: PC0-PC5
+
 	// Make sure the ADC doesn't run during config
 	adc_off(ADC1);
 
@@ -53,10 +59,10 @@ void ADC_init(){
 	rcc_periph_clock_enable(RCC_DMA1); // RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
 	dma_channel_reset(DMA1, DMA_CHANNEL1); //DMA_DeInit(DMA1_Channel1);
 	dma_set_peripheral_address(DMA1, DMA_CHANNEL1, (uint32_t) &(ADC_DR(ADC1))); // DMA_InitStructure.DMA_PeripheralBaseAddr = ADC1_DR_Address;
-	dma_set_memory_address(DMA1, DMA_CHANNEL1, (uint32_t)&ADC_value); // DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)&ADC_value;
-	dma_set_number_of_data(DMA1, DMA_CHANNEL1, 1); // DMA_InitStructure.DMA_BufferSize = 1;
+	dma_set_memory_address(DMA1, DMA_CHANNEL1, (uint32_t) ADC_value); // DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)&ADC_value;
+	dma_set_number_of_data(DMA1, DMA_CHANNEL1, 8); // DMA_InitStructure.DMA_BufferSize = 1;
 	dma_set_read_from_peripheral(DMA1, DMA_CHANNEL1); // DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
-	dma_disable_memory_increment_mode(DMA1, DMA_CHANNEL1); // DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Disable;
+	dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL1); // DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Disable;
 	dma_disable_peripheral_increment_mode(DMA1, DMA_CHANNEL1); // DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
 	dma_set_peripheral_size(DMA1, DMA_CHANNEL1, DMA_CCR_PSIZE_16BIT); // DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
 	dma_set_memory_size(DMA1, DMA_CHANNEL1, DMA_CCR_MSIZE_16BIT); // DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
@@ -81,10 +87,10 @@ void ADC_init(){
  * First call ADC_init(), than wait a little and call this function
  */
 void ADC_calibrate_and_start(){
-	uint8_t channel_array[16];
+	uint8_t channel_array[16] = {8,9,10,11,12,13,14,15};
 	// adc_set_regular_sequence 1 channel -- 0 // ADC_InitStructure.ADC_NbrOfChannel = 1;
 	channel_array[0] = ADC_CHANNEL8;
-	adc_set_regular_sequence(ADC1, 1, channel_array);
+	adc_set_regular_sequence(ADC1, 8, channel_array);
 	adc_reset_calibration(ADC1);
 	adc_calibration(ADC1);
 	adc_start_conversion_regular(ADC1); // ADC_SoftwareStartConvCmd(ADC1, ENABLE);

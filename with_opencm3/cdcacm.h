@@ -36,12 +36,16 @@
 #define SET_CONTROL_LINE_STATE      0x22
 #define SEND_BREAK                  0x23
 
-// Size of buffer to output
+// Size of input/output buffers
 #define USB_TX_DATA_SIZE            64
+#define USB_RX_DATA_SIZE            64
 
 // USB connection flag
 extern uint8_t USB_connected;
 extern struct usb_cdc_line_coding linecoding;
+
+extern char usbdatabuf[];
+extern int usbdatalen;
 
 usbd_device *USB_init();
 void usb_send(uint8_t byte);

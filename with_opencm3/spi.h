@@ -1,5 +1,5 @@
 /*
- * uart.h
+ * spi.h
  *
  * Copyright 2014 Edward V. Emelianov <eddy@sao.ru, edward.emelianoff@gmail.com>
  *
@@ -20,20 +20,20 @@
  */
 
 #pragma once
-#ifndef __UART_H__
-#define __UART_H__
+#ifndef __SPI_H__
+#define __SPI_H__
 
-// Size of buffers
-#define UART_TX_DATA_SIZE            64
+#define SPI_BUFFERSIZE 4
 
-void UART_init(uint32_t UART);
-void UART_setspeed(uint32_t UART, struct usb_cdc_line_coding *linecoding);
+typedef enum{
+	SPI_NO_DATA,
+	SPI_DATA_READY,
+	SPI_READ_ERROR
+} SPI_read_status;
 
-void uart1_send(uint8_t byte);
-void uart2_send(uint8_t byte);
-void uart3_send(uint8_t byte);
+void SPI1_init();
+uint8_t write_SPI(uint8_t *data, uint8_t len);
+SPI_read_status check_SPI();
+uint8_t *read_SPI(uint8_t *data, uint8_t len);
 
-void check_and_parce_UART();
-
-
-#endif // __UART_H__
+#endif // __SPI_H__

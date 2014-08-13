@@ -26,6 +26,8 @@
 
 // integer value given by user
 static volatile int32_t User_value = 0;
+// last active send function - to post "anonymous" replies
+sendfun lastsendfun = usb_send; // make it usb_send by default (to prevent suspension)
 // flag: !=0 when user value reading ends - for character terminals
 enum{
 	UVAL_START,		// user start to write integer value
@@ -43,9 +45,25 @@ intfun I = NULL; // function to process entered integer
 #define READINT() do{i += read_int(&buf[i+1], len-i-1);}while(0)
 #define WRONG_COMMAND() do{command = '?';}while(0)
 
+/**
+ * displays all TRD values
+ * @param s -- current output
+ */
+void print_ad_vals(sendfun s){
+	int j;
+	if(ad7794_on){
+		for(j = 0; j < TRD_NO; j++){
+			print_int(ad7794_values[j], s);
+			s(' ');
+		}
+		newline(s);
+	}
+}
+
 void parce_incoming_buf(char *buf, int len, sendfun s){
 	uint8_t command;
-	int i = 0;
+	int i = 0, j;
+	lastsendfun = s;
 	if(Uval_ready == UVAL_START){ // we are in process of user's value reading
 		i += read_int(buf, len);
 	}
@@ -61,10 +79,19 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 		command = buf[i];
 		if(!command) continue; // omit zero
 		switch (command){
+			case '1': // single conversion
+				doubleconv = 0;
+			break;
+			case '2': // double conversion
+				doubleconv = 1;
+			break;
 			case 'A': // show ADC value
 				//adc_start_conversion_direct(ADC1);
 				P("\r\n ADC value: ", s);
-				print_int(ADC_value, s);
+				for(j = 0; j < 8; j++){
+					print_int(ADC_value[j], s);
+					P("\t", s);
+				}
 				newline(s);
 			break;
 			case 'b': // turn LED off
@@ -77,6 +104,9 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 				I = process_int;
 				READINT();
 			break;
+			case 'i': // init AD7794
+				AD7794_init();
+			break;
 			case '+': // user check number value & confirm it's right
 				if(Uval_ready == UVAL_PRINTED) Uval_ready = UVAL_CHECKED;
 				else WRONG_COMMAND();
@@ -85,16 +115,34 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 				if(Uval_ready == UVAL_PRINTED) Uval_ready = UVAL_BAD;
 				else WRONG_COMMAND();
 			break;
+			case 'g': // change gain
+				I = set_ADC_gain;
+				READINT();
+			break;
+			case 's': // read ADC val through SPI
+				if(!ad7794_on){
+					AD7794_init();
+					P("wait: values aren't ready yet\n", s);
+					break;
+				}
+				P("AD7794 values: ", s);
+				print_ad_vals(s);
+			break;
 			case 'u': // check USB connection
 				P("\r\nUSB ", s);
 				if(!USB_connected) P("dis", s);
 				P("connected\r\n",s);
 			break;
-/*
+			case 'M': // ADC monitoring ON
+				ADC_monitoring = !ADC_monitoring;
+			break;
+			case 'T': // print time
+				print_time(s);
+				newline(s);
+			break;
 			case 'U': // test: init USART1
 				UART_init(USART1);
 			break;
-*/
 			case '\n': // show newline as is
 			break;
 			case '\r':
@@ -114,9 +162,11 @@ void prnt(uint8_t *wrd, sendfun s){
 	while(*wrd) s(*wrd++);
 }
 
+/*
 void newline(sendfun s){
 	P("\r\n", s);
 }
+*/
 
 // sign of readed value
 int32_t sign;
@@ -185,4 +235,14 @@ void process_int(int32_t v, sendfun s){
 	P("You have entered a value ", s);
 	print_int(v, s);
 	newline(s);
+}
+
+void set_ADC_gain(int32_t v, sendfun s){
+	if(ad7794_on){
+		P("Change gain to ", s);
+		print_int(v, s);
+		newline(s);
+		change_AD7794_gain(v);
+		AD7794_calibration(0);
+	}
 }

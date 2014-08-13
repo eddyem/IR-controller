@@ -23,7 +23,10 @@
 #ifndef __HARDWARE_INI_H__
 #define __HARDWARE_INI_H__
 
-extern volatile uint16_t ADC_value; // ADC DMA value
+extern volatile uint16_t ADC_value[]; // ADC DMA value
+
+#define ADC_ADDR_MASK	(GPIO6|GPIO7|GPIO8|GPIO9)
+#define TRD_NO			8 // number of TRD devices
 
 void GPIO_init();
 void SysTick_init();

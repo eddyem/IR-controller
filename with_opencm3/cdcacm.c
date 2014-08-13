@@ -45,6 +45,9 @@ static const struct usb_device_descriptor dev = {
 	.bNumConfigurations = 1,
 };
 
+char usbdatabuf[64]; // buffer for received data
+int usbdatalen = 0;  // lenght of received data
+
 /*
  * This notification endpoint isn't implemented. According to CDC spec its
  * optional, but its absence causes a NULL pointer dereference in Linux
@@ -251,9 +254,9 @@ P("UNKNOWN\r\n", uart1_send);
 
 static void cdcacm_data_rx_cb(usbd_device *usbd_dev, uint8_t ep){
 	(void)ep;
-	char buf[64];
-	int len = usbd_ep_read_packet(usbd_dev, 0x01, buf, 64);
-	if(len > 0) parce_incoming_buf(buf, len, usb_send);
+	int len = usbd_ep_read_packet(usbd_dev, 0x01, usbdatabuf, USB_RX_DATA_SIZE - usbdatalen);
+	usbdatalen += len;
+	//if(len > 0) parce_incoming_buf(buf, len, usb_send);
 }
 
 static void cdcacm_data_tx_cb(usbd_device *usbd_dev, uint8_t ep){
@@ -268,8 +271,8 @@ static void cdcacm_set_config(usbd_device *usbd_dev, uint16_t wValue)
 	(void)wValue;
 	(void)usbd_dev;
 
-	usbd_ep_setup(usbd_dev, 0x01, USB_ENDPOINT_ATTR_BULK, 64, cdcacm_data_rx_cb);
-	usbd_ep_setup(usbd_dev, 0x82, USB_ENDPOINT_ATTR_BULK, 64, cdcacm_data_tx_cb);
+	usbd_ep_setup(usbd_dev, 0x01, USB_ENDPOINT_ATTR_BULK, USB_RX_DATA_SIZE, cdcacm_data_rx_cb);
+	usbd_ep_setup(usbd_dev, 0x82, USB_ENDPOINT_ATTR_BULK, USB_TX_DATA_SIZE, cdcacm_data_tx_cb);
 	usbd_ep_setup(usbd_dev, 0x83, USB_ENDPOINT_ATTR_INTERRUPT, 16, NULL);
 
 	usbd_register_control_callback(
@@ -289,15 +292,20 @@ usbd_device *USB_init(){
 	return current_usb;
 }
 
+uint8_t send_block = 0;
 /**
  * Put byte into USB buffer to send
  * @param byte - a byte to put into a buffer
  */
 void usb_send(uint8_t byte){
-	//if(!USB_connected) return;
+	while(send_block); // wait for unlock
+	send_block = 1;
 	USB_Tx_Buffer[USB_Tx_ptr++] = byte;
-	if(USB_Tx_ptr == USB_TX_DATA_SIZE) // buffer can be overflowed - send it!
+	if(USB_Tx_ptr == USB_TX_DATA_SIZE){ // buffer can be overflowed - send it!
+		send_block = 0;
 		usb_send_buffer();
+	}
+	send_block = 0;
 }
 
 /**
@@ -305,9 +313,14 @@ void usb_send(uint8_t byte){
  * this function runs when buffer is full or on SysTick
  */
 void usb_send_buffer(){
+	if(send_block) return;
+	send_block = 1;
 	if(USB_Tx_ptr){
-		if(current_usb)
+		if(current_usb && USB_connected){
 			usbd_ep_write_packet(current_usb, 0x82, USB_Tx_Buffer, USB_Tx_ptr);
+			usbd_poll(current_usb);
+		}
 		USB_Tx_ptr = 0;
 	}
+	send_block = 0;
 }

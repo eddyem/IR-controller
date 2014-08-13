@@ -23,18 +23,35 @@
 #ifndef __USER_PROTO_H__
 #define __USER_PROTO_H__
 
-typedef void (*sendfun)(uint8_t); // function to send a byte
-typedef void (*intfun)(int32_t, sendfun); // function to process entered integer value at end of input
+#include "cdcacm.h"
+#include "uart.h"
 
 // shorthand for prnt
 #define P(arg, s) prnt((uint8_t*)arg, s)
+// debug message - over USB
+#ifdef EBUG
+	#define DBG(a) prnt((uint8_t*)a, usb_send)
+#else
+	#define DBG(a)
+#endif
+
+#define MSG(arg) prnt((uint8_t*)arg, lastsendfun)
+
+typedef void (*sendfun)(uint8_t); // function to send a byte
+typedef void (*intfun)(int32_t, sendfun); // function to process entered integer value at end of input
+
+extern sendfun lastsendfun; // last active send function - to post "anonymous" replies
+
 void prnt(uint8_t *wrd, sendfun s);
-void newline(sendfun s);
+//void newline(sendfun s);
+#define newline(s)   s('\n')
 
 void print_int(int32_t N, sendfun s);
 
 void parce_incoming_buf(char *buf, int len, sendfun s);
 
 void process_int(int32_t v, sendfun s);
+void set_ADC_gain(int32_t v, sendfun s);
+void print_ad_vals(sendfun s);
 
 #endif // __USER_PROTO_H__
