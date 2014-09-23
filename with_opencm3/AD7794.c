@@ -213,21 +213,25 @@ uint32_t read_AD7794(uint8_t channel){
 	uint8_t dr;
 	switch (N){
 		case 0: // start: set channel
+//P("A0 ", uart1_send);
 			if(!AD7794_set_channel(channel)){
 				return 0; // 0 in return means error
 			}
 		break;
 		case 1: // put ADC to a single conversion mode
+//P("A1 ", uart1_send);
 			sendWord(MODE_REGISTER, SINGLE_MODE |
 				U16(0x0f)); // the lowest speed;
 			check_errR();
 		break;
 		case 2: // wait for data reading & check errors
+//P("A2", uart1_send);
 			dr = check_data_ready();
 			check_errR();
 			if(!dr) return AD7794_NOTRDY;
 		break;
 		default: // last step -> return readed data
+//P("\r\n", uart1_send);
 			N = 0;
 			return read_ADC_data();
 	}

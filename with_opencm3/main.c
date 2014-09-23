@@ -35,6 +35,7 @@ uint32_t ad7794_values[TRD_NO];
 uint8_t doubleconv = 1; // ==0 to single conversion; 1 to double (with currents reversing)
 #define ADC_direct()  setup_AD7794(EXTREFIN_1 | REF_DETECTION | UNIPOLAR_CODING, IEXC_DIRECT  | IEXC_1MA)
 #define ADC_reverse() setup_AD7794(EXTREFIN_1 | REF_DETECTION | UNIPOLAR_CODING, IEXC_SWAPPED | IEXC_1MA)
+#define RESET_ADC()   do{N = 0; ad7794_on = 0; step++; return; }while(0)
 /**
  * reads next value of voltage on TRD
  * function calls from anywhere
@@ -44,13 +45,16 @@ uint8_t doubleconv = 1; // ==0 to single conversion; 1 to double (with currents 
  * @param doubleconv == 1 to do double conversion (with currents reversing)
  */
 void read_next_TRD(){
-	static uint8_t step = 0; // step of operation
-	static uint8_t N = 0;    // number of current device
+	static uint8_t step = 0;            // step of operation
+	static uint8_t N = 0;               // number of current device
 	static uint32_t val0 = 0, val1 = 0; // readed values
 	// "default" in switch will process last step
 	switch (step){ // now we should do something depending on current step value
 		case 0: // step 0: set address
-			if(N == 0) AD7794_init(); // reset ADC in beginning of each set
+			if(N == 0 || !ad7794_on) AD7794_init(); // reset ADC in beginning of each set
+//P("Step 0: read_next_TRD, N=", uart1_send);
+//print_int(N, uart1_send);
+//newline(uart1_send);
 			GPIO_BSRR(GPIOC) = N << 6; // set address
 			GPIO_BSRR(GPIOC) = GPIO10; // enable com
 			N++; // and increment TRD counter
@@ -61,12 +65,12 @@ void read_next_TRD(){
 		case 1: // step 1: prepare reading in 1st current direction or single reading
 			if(!val0){ // 1st value isn't ready yet
 				if(!ADC_direct()){ // error: we can't setup reading
-					ad7794_values[N] = 0;
-					ad7794_on = 0;
-					step++;
-					break;
+					// ad7794_values[N] = 0;
+					RESET_ADC(); // reset steps counter to re-initialize + mark ad7794_on = 0
 				}
-				val0 = AD7794_NOTRDY;
+				val0 = read_AD7794(0);
+				if(!val0) RESET_ADC();
+				break;
 			}
 			if(val0 == AD7794_NOTRDY){ // data not ready yet
 				val0 = read_AD7794(0);
@@ -74,21 +78,21 @@ void read_next_TRD(){
 				// All OK, prepare second reading
 				if(doubleconv){ // double conversion -> prepare
 					if(!ADC_reverse()){ // we can't setup it, but we have 1st value
-						val1 = val0;
+						//ad7794_values[N] = val0 << 1; // double val0
+						RESET_ADC();
 					}else{
 						val1 = read_AD7794(0); // process it later
 					}
 				}else{ // simply copy value instead of multiplying by 2
-					val1 = val0;
-				}
-			}else{ // val0 ready, check val1
-				if(doubleconv && !val1){ // error
-					ad7794_values[N] = 0;
-					ad7794_on = 0;
+					ad7794_values[N] = val0 << 1;
 					step++;
-					break;
 				}
-				if(doubleconv && (val1 == AD7794_NOTRDY)){ // val1 not ready yet
+			}else{ // val0 ready, check val1; we can go here only when doubleconv != 0
+				if(!val1){ // error: on previous step we had to get some value or AD7794_NOTRDY
+					//ad7794_values[N] = 0;
+					RESET_ADC();
+				}
+				if(val1 == AD7794_NOTRDY){ // val1 not ready yet
 					val1 = read_AD7794(0);
 				}else{ // all OK, we can put sum of val0 & val1 into array
 					ad7794_values[N] = val0 + val1;
@@ -149,6 +153,8 @@ int main(){
 
 	SPI1_init();
 
+	OW_Init();
+
 	// wait a little and then turn on USB pullup
 	for (i = 0; i < 0x800000; i++)
 		__asm__("nop");
@@ -161,17 +167,17 @@ int main(){
 			parce_incoming_buf(usbdatabuf, usbdatalen, usb_send);
 			usbdatalen = 0; // all data have been processed - prepare to get new portion
 		}
-		check_and_parce_UART(); // also check data in UART buffers
+		check_and_parce_UART(USART1); // also check data in UART buffers
 		if(ad7794_on){
 			if(Timer != lastTRDread){ // run this not more than once in 1ms
 				lastTRDread = Timer;
 				read_next_TRD();
 			}
 		}
-		if(Timer - Old_timer > 999){ // write out time in seconds
+		if(Timer - Old_timer > 999){ // one-second cycle
 			Old_timer += 1000;
 			gpio_toggle(GPIOC, GPIO12); // toggle LED
-			if(!ad7794_on) AD7794_init(); // try to init ADC
+			if(!ad7794_on) AD7794_init(); // try to init ADC if it doesn't work
 			//print_int(Timer/1000, usb_send);
 		}else if(Timer < Old_timer){ // Timer overflow
 			Old_timer = 0;

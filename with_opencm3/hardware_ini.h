@@ -33,4 +33,13 @@ void SysTick_init();
 void ADC_init();
 void ADC_calibrate_and_start();
 
+/*
+ * One Wire interface
+ */
+// In case of using USART2 for 1-wire port, make corresponding change
+// and redefine pins in OW_Init
+//#define OW_USART_X			USART2
+#define OW_USART_X			USART3
+
+
 #endif // __HARDWARE_INI_H__

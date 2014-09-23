@@ -24,15 +24,9 @@
 #include "cdcacm.h"
 
 // Buffers for Tx
-typedef struct {
-	uint8_t buf[UART_TX_DATA_SIZE];
-	uint8_t start; // index from where to start reading
-	uint8_t end;   // index from where to start writing
-} UART_buff;
 static UART_buff TX_buffer[3]; // Tx buffers for all three ports
 static UART_buff RX_buffer[3]; // Rx buffers for all three ports
 
-void fill_uart_buff(uint32_t UART, uint8_t byte);
 void fill_uart_RXbuff(uint32_t UART, uint8_t byte);
 
 /**
@@ -242,32 +236,49 @@ void uart3_send(uint8_t byte){
 	fill_uart_buff(USART3, byte);
 }
 
+UART_buff *get_uart_buffer(uint32_t UART){
+	switch(UART){
+		case USART1:
+			return &RX_buffer[0];
+		break;
+		case USART2:
+			return &RX_buffer[1];
+		break;
+		case USART3:
+			return &RX_buffer[2];
+		break;
+		default: // error - return
+			return NULL;
+	}
+	return NULL;
+}
+
 /**
  * Check buffers for non-empty & run parsing function
+ * @param UART - device to check
  */
-void check_and_parce_UART(){
-	int i;
+void check_and_parce_UART(uint32_t UART){
 	sendfun sf;
-	UART_buff *curbuff;
+	UART_buff *curbuff = get_uart_buffer(UART);
 	uint8_t datalen; // length of data in buffer - here we use param "end"
-	for(i = 0; i < 3; i++){
-		curbuff = &RX_buffer[i];
-		datalen = curbuff->end;
-		if(!datalen) continue; // buffer is empty
-		// buffer isn't empty: process data in it
-		switch (i){
-			case 0:
-				sf = uart1_send;
-			break;
-			case 1:
-				sf = uart2_send;
-			break;
-			default:
-				sf = uart3_send;
-		}
-		parce_incoming_buf((char*)curbuff->buf, datalen, sf); // process data
-		curbuff->end = 0; // and zero counter
+	if(!curbuff) return;
+	switch(UART){
+		case USART1:
+			sf = uart1_send;
+		break;
+		case USART2:
+			sf = uart2_send;
+		break;
+		case USART3:
+			sf = uart3_send;
+		break;
+		default: // error - return
+			return;
 	}
+	datalen = curbuff->end;
+	if(!datalen) return; // buffer is empty
+	parce_incoming_buf((char*)curbuff->buf, datalen, sf); // process data
+	curbuff->end = 0; // and zero counter
 }
 
 /**
