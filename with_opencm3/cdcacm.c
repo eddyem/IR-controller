@@ -317,7 +317,8 @@ void usb_send_buffer(){
 	send_block = 1;
 	if(USB_Tx_ptr){
 		if(current_usb && USB_connected){
-			usbd_ep_write_packet(current_usb, 0x82, USB_Tx_Buffer, USB_Tx_ptr);
+			// usbd_ep_write_packet return 0 if previous packet isn't transmit yet
+			while(USB_Tx_ptr != usbd_ep_write_packet(current_usb, 0x82, USB_Tx_Buffer, USB_Tx_ptr));
 			usbd_poll(current_usb);
 		}
 		USB_Tx_ptr = 0;

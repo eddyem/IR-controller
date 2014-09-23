@@ -31,6 +31,8 @@
 #include <stdint.h>			// int types
 #include <sys/time.h>		// gettimeofday
 
+#define BUFLEN 1024
+
 double t0; // start time
 
 FILE *fout = NULL; // file for messages duplicating
@@ -39,6 +41,8 @@ int BAUD_RATE = B115200;
 struct termio oldtty, tty; // TTY flags
 struct termios oldt, newt; // terminal flags
 int comfd; // TTY fd
+
+#define DBG(...) do{fprintf(stderr, __VA_ARGS__);}while(0)
 
 /**
  * function for different purposes that need to know time intervals
@@ -93,58 +97,68 @@ void tty_init(){
 }
 
 /**
- * Read character from console without echo
- * @return char readed
- */
-int read_console(){
-	int rb;
-	struct timeval tv;
-	int retval;
-	fd_set rfds;
-	FD_ZERO(&rfds);
-	FD_SET(STDIN_FILENO, &rfds);
-	tv.tv_sec = 0; tv.tv_usec = 10000;
-	retval = select(1, &rfds, NULL, NULL, &tv);
-	if(!retval) rb = 0;
-	else {
-		if(FD_ISSET(STDIN_FILENO, &rfds)) rb = getchar();
-		else rb = 0;
-	}
-	return rb;
-}
-
-/**
  * getchar() without echo
  * wait until at least one character pressed
  * @return character readed
- */
-int mygetchar(){ // аналог getchar() без необходимости жать Enter
+ *
+int mygetchar(){
 	int ret;
 	do ret = read_console();
 	while(ret == 0);
 	return ret;
-}
+}*/
 
 /**
- * Read data from TTY
- * @param buff (o) - buffer for data read
- * @param length   - buffer len
- * @return amount of readed bytes
+ * read both tty & console
+ * @param buff (o)    - buffer for messages readed from tty
+ * @param length (io) - buff's length (return readed len or 0)
+ * @param rb (o)      - byte readed from console or -1
+ * @return 1 if something was readed here or there
  */
-size_t read_tty(uint8_t *buff, size_t length){
-	ssize_t L = 0;
-	fd_set rfds;
+int read_tty_and_console(char *buff, size_t *length, int *rb){
+	ssize_t L;
+	// ssize_t l;
+	size_t buffsz = *length;
 	struct timeval tv;
-	int retval;
+	int sel, retval = 0;
+	fd_set rfds;
 	FD_ZERO(&rfds);
+	FD_SET(STDIN_FILENO, &rfds);
 	FD_SET(comfd, &rfds);
-	tv.tv_sec = 0; tv.tv_usec = 10000; // wait for 10ms
-	retval = select(comfd + 1, &rfds, NULL, NULL, &tv);
-	if (!retval) return 0;
-	if(FD_ISSET(comfd, &rfds)){
-		if((L = read(comfd, buff, length)) < 1) return 0;
+	tv.tv_sec = 0; tv.tv_usec = 10000;
+	sel = select(comfd + 1, &rfds, NULL, NULL, &tv);
+	if(sel > 0){
+		if(FD_ISSET(STDIN_FILENO, &rfds)){
+			*rb = getchar();
+			retval = 1;
+		}else{
+			*rb = -1;
+		}
+		if(FD_ISSET(comfd, &rfds)){
+			if((L = read(comfd, buff, buffsz)) < 1){ // disconnect or other troubles
+				fprintf(stderr, "USB error or disconnected!\n");
+				quit(1);
+			}else{
+				if(L == 0){ // USB disconnected
+					fprintf(stderr, "USB disconnected!\n");
+					quit(1);
+				}
+				// all OK continue reading
+		/*		DBG("readed %zd bytes, try more.. ", L);
+				buffsz -= L;
+				while(buffsz > 0 && (l = read(comfd, buff+L, buffsz)) > 0){
+					L += l;
+					buffsz -= l;
+				}
+				DBG("full len: %zd\n", L); */
+				*length = (size_t) L;
+				retval = 1;
+			}
+		}else{
+			*length = 0;
+		}
 	}
-	return (size_t)L;
+	return retval;
 }
 
 void help(){
@@ -154,13 +168,11 @@ void help(){
 	);
 }
 
-#define dup_pr(...) do{printf(__VA_ARGS__); if(fout) fprintf(fout, __VA_ARGS__);}while(0)
-
 void con_sig(int rb){
-	uint8_t cmd;
+	char cmd;
 	if(rb < 1) return;
 	if(rb == 'q') quit(0); // q == exit
-	cmd = (uint8_t) rb;
+	cmd = (char) rb;
 	write(comfd, &cmd, 1);
 	/*switch(rb){
 		case 'h':
@@ -178,7 +190,7 @@ void con_sig(int rb){
  * @param len      - length of data in buffer (could be 2 or 4)
  * @return
  */
-uint32_t get_int(uint8_t *buff, size_t len){
+uint32_t get_int(char *buff, size_t len){
 	if(len != 2 && len != 4){
 		fprintf(stdout, "Bad data length!\n");
 		return 0xffffffff;
@@ -190,9 +202,42 @@ uint32_t get_int(uint8_t *buff, size_t len){
 	return data;
 }
 
+/**
+ * Copy line by line buffer buff to file removing cmd starting from newline
+ * @param buffer - data to put into file
+ * @param cmd - symbol to remove from line startint (if found, change *cmd to (-1)
+ * 			or NULL, (-1) if no command to remove
+ */
+void copy_buf_to_file(char *buffer, int *cmd){
+	char *buff, *line, *ptr;
+	if(!cmd || *cmd < 0){
+		fprintf(fout, "%s", buffer);
+		return;
+	}
+	buff = strdup(buffer), ptr = buff;
+	do{
+		if(!*ptr) break;
+		if(ptr[0] == (char)*cmd){
+			*cmd = -1;
+			ptr++;
+			if(ptr[0] == '\n') ptr++;
+			if(!*ptr) break;
+		}
+		line = ptr;
+		ptr = strchr(buff, '\n');
+		if(ptr){
+			*ptr++ = 0;
+			//fprintf(fout, "%s\n", line);
+		}//else
+			//fprintf(fout, "%s", line); // no newline found in buffer
+		fprintf(fout, "%s\n", line);
+	}while(ptr);
+	free(buff);
+}
+
 int main(int argc, char *argv[]){
-	int rb;
-	uint8_t buff[256];
+	int rb, oldcmd = -1;
+	char buff[BUFLEN+1];
 	size_t L;
 	if(argc == 2){
 		fout = fopen(argv[1], "a");
@@ -210,14 +255,19 @@ int main(int argc, char *argv[]){
 	setbuf(stdout, NULL);
 	t0 = dtime();
 	while(1){
-		rb = read_console();
-		if(rb > 0) con_sig(rb);
-		L = read_tty(buff, 255);
-		if(L){
-			buff[L] = 0;
-			printf("%s", buff);
-			//if(fout) fprintf(fout, "%zd\t%s", time(NULL), buff);
-			if(fout) fprintf(fout, "%s", buff);
+		L = BUFLEN;
+		if(read_tty_and_console(buff, &L, &rb)){
+			if(rb > 0){
+				con_sig(rb);
+				oldcmd = rb;
+			}
+			if(L){
+				buff[L] = 0;
+				printf("%s", buff);
+				if(fout){
+					copy_buf_to_file(buff, &oldcmd);
+				}
+			}
 		}
 	}
 }
