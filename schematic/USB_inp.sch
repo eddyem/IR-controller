@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Пн 21 июл 2014 09:59:08
+EESchema Schematic File Version 2  date Пн 29 сен 2014 14:40:29
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -41,7 +41,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 4 12
 Title "USB input circuit"
-Date "21 jul 2014"
+Date "29 sep 2014"
 Rev ""
 Comp "SAO RAS"
 Comment1 ""

@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Пн 21 июл 2014 09:59:08
+EESchema Schematic File Version 2  date Пн 29 сен 2014 14:40:29
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -41,7 +41,7 @@ $Descr A3 16535 11693
 encoding utf-8
 Sheet 1 12
 Title "IR-spectrometer Control System"
-Date "21 jul 2014"
+Date "29 sep 2014"
 Rev ""
 Comp "SAO RAS"
 Comment1 ""
@@ -837,17 +837,6 @@ Text Label 1250 4950 2    60   ~ 0
 POW_LOAD
 Text Notes 3550 3200 0    60   ~ 0
 5V out
-$Comp
-L GPRM1-61 XP1
-U 1 1 53DA1715
-P 2850 3350
-F 0 "XP1" H 2850 1650 50  0000 C CNN
-F 1 "GPRM1-61" V 2850 3350 50  0000 C CNN
-F 2 "gprm1-61" H 2850 3350 50  0001 C CNN
-F 3 "~" H 2850 3350 50  0001 C CNN
-	1    2850 3350
-	-1   0    0    -1  
-$EndComp
 Text Notes 4300 3450 0    61   ~ 0
 End point\nswitches
 $Comp
@@ -1399,16 +1388,14 @@ $EndComp
 $Comp
 L GNDPWR #PWR028
 U 1 1 53DFE593
-P 2400 5050
-F 0 "#PWR028" H 2400 5100 40  0001 C CNN
-F 1 "GNDPWR" H 2400 4970 40  0000 C CNN
-F 2 "" H 2400 5050 60  0000 C CNN
-F 3 "" H 2400 5050 60  0000 C CNN
-	1    2400 5050
+P 1750 4100
+F 0 "#PWR028" H 1750 4150 40  0001 C CNN
+F 1 "GNDPWR" H 1750 4020 40  0000 C CNN
+F 2 "" H 1750 4100 60  0000 C CNN
+F 3 "" H 1750 4100 60  0000 C CNN
+	1    1750 4100
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	2400 5050 2400 4850
 Wire Wire Line
 	2400 4650 1800 4650
 Wire Notes Line
@@ -1565,10 +1552,6 @@ Wire Wire Line
 	1600 6550 1600 6750
 Connection ~ 1600 6750
 Connection ~ 1600 6550
-NoConn ~ 2400 4150
-NoConn ~ 2400 4050
-NoConn ~ 2400 3950
-NoConn ~ 2400 3850
 NoConn ~ 1900 6350
 NoConn ~ 2700 6350
 NoConn ~ 2700 6650
@@ -1581,4 +1564,27 @@ Wire Wire Line
 	2400 4250 2400 4350
 Wire Wire Line
 	2400 4350 1600 4350
+Wire Wire Line
+	1750 4000 1750 4100
+$Comp
+L GPRM1-61 XP1
+U 1 1 53DA1715
+P 2850 3300
+F 0 "XP1" H 2850 1600 50  0000 C CNN
+F 1 "GPRM1-61" V 2850 3300 50  0000 C CNN
+F 2 "gprm1-61" H 2850 3300 50  0001 C CNN
+F 3 "~" H 2850 3300 50  0001 C CNN
+	1    2850 3300
+	1    0    0    1   
+$EndComp
+Wire Wire Line
+	2400 4150 2400 3850
+Wire Wire Line
+	1750 4000 2400 4000
+Connection ~ 2400 4000
+Connection ~ 2400 4050
+Connection ~ 2400 3950
+Wire Wire Line
+	3300 1800 3300 1900
+Connection ~ 3300 1900
 $EndSCHEMATC
