@@ -31,14 +31,17 @@ function [Time T Tfxd] = get_T(filename, filter_treshold)
 		endfor
 	endif
 
-	plot(Time, R);
+	Leg = ['1'; '2'; '3'; '4'; '5'; '6'; '7'; '8'];
+
+	more_colors(plot(Time, R), 8);
 	Tit = sprintf("Resistance, \\Omega");
 	xlabel("Time, s"); ylabel("R, \\Omega"); title(Tit);
 	print -dpng -color resistance.png;
 	close
-	plot(Time, T);
+	more_colors(plot(Time, T), 8);
 	Tit = sprintf("Temperature, ^\\circ{}C");
 	xlabel("Time, s"); ylabel("T, ^\\circ{}C"); title(Tit);
+	legend(Leg);
 	print -dpng -color temperatures.png;
 	close
 
@@ -46,12 +49,18 @@ function [Time T Tfxd] = get_T(filename, filter_treshold)
 	Tavr = mean(T, 2);
 	Tadd = mean(T - repmat(Tavr, [1 8]));
 	Tfxd = T - repmat(Tadd,[size(T,1) 1]);
-	plot(Time, Tfxd);
+	more_colors(plot(Time, Tfxd), 8);
 	Tit = sprintf("Temperature fixed to average value, ^\\circ{}C");
 	xlabel("Time, s"); ylabel("T, ^\\circ{}C"); title(Tit);
 	print -dpng -color temperatures_fixed.png;
+	legend(Leg);
 	close
 	printf("differences:\n"); printf("%g\n", -Tadd);
 endfunction
 
-
+function more_colors(h, N)
+	palette = jet (N);
+	for i = 1:N
+		set(h(i),"color",palette(i,:))
+	endfor
+endfunction

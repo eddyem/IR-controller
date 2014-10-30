@@ -50,8 +50,11 @@ void print_int(int32_t N, sendfun s);
 
 void parce_incoming_buf(char *buf, int len, sendfun s);
 
-void process_int(int32_t v, sendfun s);
+// void process_int(int32_t v, sendfun s);
 void set_ADC_gain(int32_t v, sendfun s);
 void print_ad_vals(sendfun s);
+void stepper_proc(int32_t v, sendfun s);
+void set_timr(int32_t v, sendfun s);
+void print_hex(uint8_t *buff, uint8_t l, sendfun s);
 
 #endif // __USER_PROTO_H__

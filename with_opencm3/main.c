@@ -24,6 +24,7 @@
 #include "cdcacm.h"
 #include "uart.h"
 #include "spi.h"
+#include "stepper_motors.h"
 
 volatile uint32_t Timer = 0, tOVRFL = 0; // global timer (milliseconds), overflow counter
 usbd_device *usbd_dev;
@@ -55,10 +56,7 @@ void read_next_TRD(){
 //P("Step 0: read_next_TRD, N=", uart1_send);
 //print_int(N, uart1_send);
 //newline(uart1_send);
-			GPIO_BSRR(GPIOC) = N << 6; // set address
-			GPIO_BSRR(GPIOC) = GPIO10; // enable com
-			N++; // and increment TRD counter
-			if(N == TRD_NO) N = 0;
+			gpio_set(ADC_ADDR_PORT, ADC_SET_ADDR(N) | ADC_EN_PIN); // set address & enable switch
 			val0 = val1 = 0;
 			step++;
 		break;
@@ -102,9 +100,13 @@ void read_next_TRD(){
 		break;
 		default: // last step - turn off multiplexer
 			step = 0;
-			GPIO_BSRR(GPIOC) = (ADC_ADDR_MASK | GPIO10) << 16; // disable com & clear address bytes
+			gpio_clear(ADC_ADDR_PORT, ADC_ADDR_MASK | ADC_EN_PIN); // disable com & clear address bytes
+			N++; // and increment TRD counter
+			if(N == TRD_NO) N = 0;
 	}
 }
+
+//uint8_t curSPI = 1;
 
 void AD7794_init(){
 	uint8_t  i;
@@ -112,7 +114,15 @@ void AD7794_init(){
 	i = reset_AD7794();
 	if(i != ADC_NO_ERROR){
 		if(i == ADC_ERR_NO_DEVICE){
-			MSG("ADC signal is absent! Check connection.\r\n");
+		//	print_int(curSPI, lastsendfun);
+			MSG(": ADC signal is absent! Check connection.\r\n");
+		/*	if(curSPI == 1){
+				curSPI = 2;
+				switch_SPI(SPI2);
+			}else{
+				curSPI = 1;
+				switch_SPI(SPI1);
+			}*/
 		}
 	}else{
 		if(!setup_AD7794(INTREFIN | REF_DETECTION | UNIPOLAR_CODING, IEXC_DIRECT  | IEXC_1MA)
@@ -133,11 +143,12 @@ int main(){
 	//rcc_clock_setup_in_hsi_out_48mhz();
 	// RCC clocking: 8MHz oscillator -> 72MHz system
 	rcc_clock_setup_in_hse_8mhz_out_72mhz();
-
 	// GPIO
 	GPIO_init();
-	gpio_set(GPIOC, GPIO11); // turn off USB
-	gpio_clear(GPIOC, GPIO12); // turn on LED
+
+	steppers_init();
+
+	usb_disconnect(); // turn off USB
 
 	// init USART1
 	UART_init(USART1);
@@ -146,21 +157,26 @@ int main(){
 	usbd_dev = USB_init();
 
 	// init ADC
-	ADC_init();
+//	ADC_init();
 
 	// SysTick is a system timer with 1mc period
 	SysTick_init();
 
-	SPI1_init();
 
-	OW_Init();
+//	switch_SPI(SPI2); // init SPI2
+//	SPI_init();
+
+	switch_SPI(SPI1); // init SPI1
+	SPI_init();
+	//OW_Init();
 
 	// wait a little and then turn on USB pullup
 	for (i = 0; i < 0x800000; i++)
 		__asm__("nop");
-	gpio_clear(GPIOC, GPIO11);
-	ADC_calibrate_and_start();
+	usb_connect(); // turn on USB
 
+	//ADC_calibrate_and_start();
+init_dmatimer();
 	while(1){
 		usbd_poll(usbd_dev);
 		if(usbdatalen){ // there's something in USB buffer
@@ -174,10 +190,13 @@ int main(){
 				read_next_TRD();
 			}
 		}
+		process_stepper_motors(); // check flags of motors' timers
 		if(Timer - Old_timer > 999){ // one-second cycle
 			Old_timer += 1000;
-			gpio_toggle(GPIOC, GPIO12); // toggle LED
-			if(!ad7794_on) AD7794_init(); // try to init ADC if it doesn't work
+			//gpio_toggle(GPIOC, GPIO12); // toggle LED
+			//gpio_toggle(GPIO_BANK_SPI2_MOSI, GPIO_SPI2_MOSI);
+			//gpio_toggle(GPIO_BANK_SPI2_SCK, GPIO_SPI2_SCK);
+		//	if(!ad7794_on) AD7794_init(); // try to init ADC if it doesn't work
 			//print_int(Timer/1000, usb_send);
 		}else if(Timer < Old_timer){ // Timer overflow
 			Old_timer = 0;

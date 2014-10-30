@@ -292,20 +292,19 @@ usbd_device *USB_init(){
 	return current_usb;
 }
 
-uint8_t send_block = 0;
+mutex_t send_block_mutex = MUTEX_UNLOCKED;
 /**
  * Put byte into USB buffer to send
  * @param byte - a byte to put into a buffer
  */
 void usb_send(uint8_t byte){
-	while(send_block); // wait for unlock
-	send_block = 1;
+	mutex_lock(&send_block_mutex);
 	USB_Tx_Buffer[USB_Tx_ptr++] = byte;
 	if(USB_Tx_ptr == USB_TX_DATA_SIZE){ // buffer can be overflowed - send it!
-		send_block = 0;
+		mutex_unlock(&send_block_mutex);
 		usb_send_buffer();
-	}
-	send_block = 0;
+	}else
+		mutex_unlock(&send_block_mutex);
 }
 
 /**
@@ -313,8 +312,7 @@ void usb_send(uint8_t byte){
  * this function runs when buffer is full or on SysTick
  */
 void usb_send_buffer(){
-	if(send_block) return;
-	send_block = 1;
+	if(MUTEX_LOCKED == mutex_trylock(&send_block_mutex)) return;
 	if(USB_Tx_ptr){
 		if(current_usb && USB_connected){
 			// usbd_ep_write_packet return 0 if previous packet isn't transmit yet
@@ -323,5 +321,5 @@ void usb_send_buffer(){
 		}
 		USB_Tx_ptr = 0;
 	}
-	send_block = 0;
+	mutex_unlock(&send_block_mutex);
 }

@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Пн 29 сен 2014 14:40:29
+EESchema Schematic File Version 2  date Вт 07 окт 2014 17:18:47
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -41,7 +41,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 4 12
 Title "USB input circuit"
-Date "29 sep 2014"
+Date "7 oct 2014"
 Rev ""
 Comp "SAO RAS"
 Comment1 ""
@@ -301,10 +301,20 @@ Wire Wire Line
 Wire Wire Line
 	3900 2500 2500 2500
 Connection ~ 2500 2500
-Connection ~ 3900 2500
-Wire Wire Line
-	5200 2000 3900 2000
-Wire Wire Line
-	3900 2000 3900 3300
 Connection ~ 3900 3100
+Wire Wire Line
+	3900 3300 3900 2500
+$Comp
+L +3.3V #PWR?
+U 1 1 5433F723
+P 5200 1900
+F 0 "#PWR?" H 5200 1860 30  0001 C CNN
+F 1 "+3.3V" H 5200 2010 30  0000 C CNN
+F 2 "" H 5200 1900 60  0000 C CNN
+F 3 "" H 5200 1900 60  0000 C CNN
+	1    5200 1900
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5200 1900 5200 2000
 $EndSCHEMATC

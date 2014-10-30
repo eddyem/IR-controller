@@ -31,9 +31,11 @@ typedef enum{
 	SPI_READ_ERROR
 } SPI_read_status;
 
-void SPI1_init();
+void SPI_init();
 uint8_t write_SPI(uint8_t *data, uint8_t len);
 SPI_read_status check_SPI();
 uint8_t *read_SPI(uint8_t *data, uint8_t len);
+
+void switch_SPI(uint32_t SPI);
 
 #endif // __SPI_H__

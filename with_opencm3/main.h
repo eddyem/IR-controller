@@ -37,9 +37,12 @@
 #include <libopencm3/stm32/dma.h>
 #include <libopencm3/stm32/spi.h>
 
+#include "sync.h" // mutexes
 #include "user_proto.h"
 #include "AD7794.h"
 #include "onewire.h"
+#include "stepper_motors.h"
+#include "sensors.h"
 
 #define _U_    __attribute__((__unused__))
 #define  U8(x)  ((uint8_t)  x)

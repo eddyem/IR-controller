@@ -1,0 +1,1 @@
+don't forget to call nvic_enable_irq(irq) to allow interrupts

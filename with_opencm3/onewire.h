@@ -34,17 +34,20 @@
 #define OW_READ_SLOT	(uint8_t*)"0xff"
 
 void OW_Init();
-uint8_t OW_Send(uint8_t sendReset, uint8_t *command, uint8_t cLen,
-		uint8_t *data, uint8_t dLen, uint8_t readStart);
+uint8_t OW_Send(uint8_t sendReset, uint8_t *command, uint8_t cLen);
+uint8_t OW_Get(uint8_t buflen, uint8_t *data, uint8_t readStart);
 uint8_t OW_Scan(uint8_t *buf, uint8_t num);
 
 // shortcuts for functions
 // only send message b wich length is c with RESET flag a
-#define OW_SendOnly(a,b,c)  OW_Send(a, b, c, (void*)0, 0, OW_NO_READ)
+#define OW_SendOnly(a,b,c)  OW_Send(a, b, c)
 // send 1 command (with bus reset)
-#define OW_WriteCmd(cmd) OW_Send(1, cmd, 1, (void*)0, 0, OW_NO_READ)
+#define OW_WriteCmd(cmd) OW_Send(1, cmd, 1)
 // send 1 function (without bus reset)
-#define OW_WriteFn(cmd) OW_Send(0, cmd, 1, (void*)0, 0, OW_NO_READ)
+#define OW_WriteFn(cmd) OW_Send(0, cmd, 1)
+#define OW_Wait_TX() while(!(USART_SR(OW_USART_X) & USART_SR_TC))
+
+void OW_getTemp();
 
 /*
  * thermometer identificator is: 8bits CRC, 48bits serial, 8bits device code (10h)

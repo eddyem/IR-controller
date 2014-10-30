@@ -1,3 +1,11 @@
+The work begins
+First PCB have been prodused, so I need "only" to solder elements & finish the code
+
+Pinout of MCI is in file schematics/STM32_PINS
+
+
+-- OLD --
+
 This is a sketch for futher work
 I found that libopencm3 is more friendly than SPL. Also I have some new thoughts about modular system: for
 flexibility.

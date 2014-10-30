@@ -21,6 +21,7 @@
 
 #include "main.h"
 #include "spi.h"
+#include "hardware_ini.h"
 
 // Rx/Tx buffer
 volatile uint8_t SPI_TxBuffer[SPI_BUFFERSIZE];
@@ -32,35 +33,31 @@ volatile uint8_t SPI_datalen   = 0;
 #endif
 volatile uint8_t SPI_EOT_FLAG = 1; // end of transmission flag, set by interrupt
 
-/*
- * Configure SPI port
+
+uint32_t Current_SPI = SPI1; // this is SPI interface which would b
+/**
+ * Set current SPI to given value
  */
-void SPI1_init(){
-	rcc_periph_clock_enable(RCC_SPI1);
-	//rcc_periph_clock_enable(RCC_GPIOB); // PB3..5
-	rcc_periph_clock_enable(RCC_GPIOA); // PA5..7
-	// PA5 - SCK, PA6 - MISO, PA7 - MOSI
-	gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
-		GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO5 | GPIO7 );
-	gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO6);
+void switch_SPI(uint32_t SPI){
+	Current_SPI = SPI;
+}
 
-	spi_reset(SPI1);
-	/* Set up SPI in Master mode with:
-	 * Clock baud rate: 1/128 of peripheral clock frequency
-	 * Clock polarity: Idle High
-	 * Clock phase: Data valid on 2nd clock pulse
-	 * Data frame format: 8-bit
-	 * Frame format: MSB First
-	 */
-	spi_init_master(SPI1, SPI_CR1_BAUDRATE_FPCLK_DIV_128, SPI_CR1_CPOL_CLK_TO_1_WHEN_IDLE,
-		SPI_CR1_CPHA_CLK_TRANSITION_2, SPI_CR1_DFF_8BIT, SPI_CR1_MSBFIRST);
-	nvic_enable_irq(NVIC_SPI1_IRQ); // enable SPI interrupt
-
+void SPI_init(){
+	switch(Current_SPI){
+		case SPI1:
+			SPI1_init();
+		break;
+		case SPI2:
+			SPI2_init();
+		break;
+		default:
+		return; // error
+	}
 }
 
 //uint32_t read_end; // read timeout
 /**
- * Write data to SPI1
+ * Write data to current SPI
  * @param data - buffer with data
  * @param len  - buffer length (<= DMA_BUFFERSIZE)
  * @return 0 in case of error (or 1 in case of success)
@@ -72,7 +69,7 @@ uint8_t write_SPI(uint8_t *data, uint8_t len){
 	//DBG("check\r\n");
 	while(!SPI_EOT_FLAG && Timer < tend); // wait for previous DMA interrupt
 	if(!SPI_EOT_FLAG){
-		//DBG("ERR!\r\n");
+		DBG("SPI error: no EOT flag!\r\n");
 		return 0; // error: there's no receiver???
 	}
 	if(len > SPI_BUFFERSIZE) len = SPI_BUFFERSIZE;
@@ -88,9 +85,9 @@ uint8_t write_SPI(uint8_t *data, uint8_t len){
 	SPI_TxIndex = 0;
 	SPI_datalen = len; // set length of data to transmit
 	// start transmission - enable interrupts
-	SPI_CR2(SPI1) |= SPI_CR2_TXEIE | SPI_CR2_RXNEIE; //spi_enable_rx_buffer_not_empty_interrupt(SPI1); spi_enable_tx_buffer_empty_interrupt(SPI1);
+	SPI_CR2(Current_SPI) |= SPI_CR2_TXEIE | SPI_CR2_RXNEIE; //spi_enable_rx_buffer_not_empty_interrupt(SPI1); spi_enable_tx_buffer_empty_interrupt(SPI1);
 	// Enable the SPI peripheral
-	spi_enable(SPI1);
+	spi_enable(Current_SPI);
 #endif // SPI_USE_DMA
 	return 1;
 }
@@ -108,7 +105,7 @@ uint8_t *read_SPI(uint8_t *data, uint8_t len){
 	//DBG("check\r\n");
 	while((!SPI_EOT_FLAG || len != SPI_RxIndex) && Timer < tend);
 	if(len != SPI_RxIndex){
-		//DBG("ERR\r\n");
+		//DBG("SPI error: bad data length\r\n");
 		return NULL;
 	}
 	//DBG("OK\r\n");

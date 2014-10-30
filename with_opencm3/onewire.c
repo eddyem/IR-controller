@@ -24,8 +24,10 @@
 #define OW_RST	0xf0
 
 
-// In/Out buffer
-uint8_t ow_buf[8];
+uint8_t dev_amount = 0;   // amount of 1-wire devices
+uint8_t ID_buf[64] = {0}; // 1-wire devices ID buffer (8 bytes for every device)
+uint8_t NUM_buf[8] = {0}; // numerical identificators for each sensor
+
 /**
  * this function sends bits of ow_byte (LSB first) to 1-wire line
  * @param ow_byte - byte to convert
@@ -46,22 +48,29 @@ void OW_SendBits(uint8_t ow_byte, uint8_t Nbits){
 	}
 }
 
-/*
- * Inverce conversion - read data (not more than 8 b
- */
-uint8_t OW_ReadByte(){
+void OW_ClearBuff(){
 	UART_buff *curbuff = get_uart_buffer(OW_USART_X);
-	uint8_t ow_byte = 0, i, L, *buf;
-	if(!curbuff || !(L = curbuff->end)) return 0; // no data?
+	curbuff->end = 0;
+}
+
+/*
+ * Inverce conversion - read data (not more than 8 bits)
+ */
+uint8_t OW_ConvertByte(uint8_t *bits, uint8_t L){
+	uint8_t ow_byte = 0, i, *st = bits;
 	if(L > 8) L = 8; // forget all other data
-	buf = curbuff->buf;
-	for(i = 0; i < L; i++, buf++){
+	for(i = 0; i < L; i++, st++){
 		ow_byte = ow_byte >> 1; // prepare for next bit filling
-		if(*buf == OW_1){
+		if(*st == OW_1){
 			ow_byte |= 0x80; // MSB = 1
 		}
 	}
-	return ow_byte >> (8 - L); // shift to the end: L could be != 8 ???
+	ow_byte >>= (8 - L);
+print_hex(bits, L, lastsendfun);
+lastsendfun(' ');
+print_hex(&ow_byte, 1, lastsendfun);
+newline(lastsendfun);
+	return ow_byte; // shift to the end: L could be != 8 ???
 }
 
 
@@ -88,7 +97,7 @@ void OW_Init(){
  *
  * return 1 in case of 1-wire devices present; otherwise return 0
  */
-uint8_t OW_Reset() {
+uint8_t OW_Reset(){
 	uint8_t ow_presence;
 	UART_buff *curbuff;
 	// change speed to 9600
@@ -111,52 +120,61 @@ uint8_t OW_Reset() {
 	return 0;
 }
 
-/*
+/**
  * Procedure of 1-wire communications
  * variables:
- * 		sendReset - send RESET before transmission
- * 		command - bytes sent to the bus (if we want to read, send OW_READ_SLOT)
- * 		cLen - command buffer length (how many bytes to send)
- * 		data - pointer for reading buffer (if reading needed)
- * 		readStart - first byte to read (starts from 0) or OW_NO_READ (not read)
- *
- * return 1 if succeed, 0 if failure
+ * @param sendReset - send RESET before transmission
+ * @param command - bytes sent to the bus (if we want to read, send OW_READ_SLOT)
+ * @param cLen - command buffer length (how many bytes to send)
+ * @return 1 if succeed, 0 if failure
  */
-uint8_t OW_Send(uint8_t sendReset, uint8_t *command, uint8_t cLen,
-		uint8_t *data, uint8_t dLen, uint8_t readStart) {
+uint8_t OW_Send(uint8_t sendReset, uint8_t *command, uint8_t cLen){
 	// if reset needed - send RESET and check bus
 	if(sendReset){
 		if(OW_Reset() == 0){
 			return 0;
 		}
 	}
-	while(cLen > 0){
+	while(cLen-- > 0){
 		OW_SendBits(*command, 8);
 		command++;
-		cLen--;
-		// wait for EOT
-		while(!(USART_SR(OW_USART_X) & USART_SR_TC));
-		// put data from bus into user buffer
-		if(readStart == 0 && dLen > 0){
-			*data = OW_ReadByte();
-			data++;
-			dLen--;
+	}
+	return 1;
+}
+
+/**
+ * Check USART IN buffer for ready & fill user buffer with data on success
+ * @param buflen - expected buffer length
+ * @param data - pointer for reading buffer (if reading needed must be at least buflen-readStart bytes)
+ * @param readStart - first byte to read (starts from 0) or OW_NO_READ (not read)
+ * @return 0 if buffer not ready; 1 if OK
+ */
+uint8_t OW_Get(uint8_t buflen, uint8_t *data, uint8_t readStart){
+	UART_buff *curbuff = get_uart_buffer(OW_USART_X);
+	uint8_t *buff = curbuff->buf;
+	if(curbuff->end < buflen/8) return 0;
+	while(buflen-- > 0){
+		if(readStart == 0){
+			*data++ = OW_ConvertByte(buff, 8);
 		}else{
 			if(readStart != OW_NO_READ){
 				readStart--;
 			}
 		}
+		buff += 8;
 	}
+	curbuff->end = 0; // zero counter
 	return 1;
 }
 
 /*
  * scan 1-wire bus
+ * WARNING! The procedure works in real-time, so it is VERY LONG
  * 		num - max number of devices
  * 		buf - array for devices' ID's (8*num bytes)
  * return amount of founded devices
- */
-uint8_t OW_Scan(uint8_t *buf, uint8_t num) {
+ *
+uint8_t OW_Scan(uint8_t *buf, uint8_t num){
 	unsigned long path,next,pos;
 	uint8_t bit,chk;
 	uint8_t cnt_bit, cnt_byte, cnt_num;
@@ -165,17 +183,19 @@ uint8_t OW_Scan(uint8_t *buf, uint8_t num) {
 	do{
 		//(issue the 'ROM search' command)
 		if( 0 == OW_WriteCmd(OW_SEARCH_ROM) ) return 0;
-		next=0; // next path to follow
-		pos=1;  // path bit pointer
+		OW_Wait_TX();
+		OW_ClearBuff(); // clear RX buffer
+		next = 0; // next path to follow
+		pos = 1;  // path bit pointer
 		for(cnt_byte = 0; cnt_byte != 8; cnt_byte++){
 			buf[cnt_num*8 + cnt_byte] = 0;
 			for(cnt_bit = 0; cnt_bit != 8; cnt_bit++){
 				//(read two bits, 'bit' and 'chk', from the 1-wire bus)
 				OW_SendBits(OW_R, 2);
-				bit = OW_ReadByte();
+				OW_Wait_TX();
+				bit = -----OW_ReadByte();
 				chk = bit & 0x02; // bit 1
 				bit = bit & 0x01; // bit 0
-				//bit = (ow_buf[0] == OW_1); chk = (ow_buf[1] == OW_1);
 				if(bit && chk) return 0; // error
 				if(!bit && !chk){ // collision, both are zero
 					if (pos & path) bit = 1;     // if we've been here before
@@ -186,11 +206,54 @@ uint8_t OW_Scan(uint8_t *buf, uint8_t num) {
 				if (bit) buf[cnt_num*8 + cnt_byte]|=(1<<cnt_bit);
 				//(write 'bit' to the 1-wire bus)
 				OW_SendBits(bit, 1);
+				OW_Wait_TX();
 			}
 		}
-		//(output the just-completed ROM value)
 		path=next;
 		cnt_num++;
 	}while(path && cnt_num < num);
 	return cnt_num;
+}*/
+
+uint8_t OW_Scan(uint8_t *buf, uint8_t num){
+	uint8_t flg, b[11], i;
+	flg = OW_Send(1, (uint8_t*)"\xcc\x33\xff\xff\xff\xff\xff\xff\xff\xff\xff", 11);
+	if(!flg) return 0;
+	OW_Wait_TX();
+	if(!OW_Get(11, b, 0)) return 0;
+	num += 2;
+	for(i = 2; i < num; i++) *buf++ = b[i];
+	return 1;
 }
+
+
+//OW_USART_X
+/*
+void OW_getTemp(){
+	uint8_t buf[9], i;
+	void printTBuf(){
+		uint8_t j;
+		OW_Send(0, (uint8_t*)"\xbe\xff\xff\xff\xff\xff\xff\xff\xff\xff", 10, buf, 9, 1);
+			for(j = 0; j != 9; j++)
+				printInt(&buf[j], 1);
+		newline();
+	}
+	// send broadcast message to start measurement
+	if(!OW_Send(1, (uint8_t*)"\xcc\x44", 2)) return;
+	Delay(1000);
+	// read values
+	if(dev_amount == 1){
+		if(OW_WriteCmd(OW_SKIP_ROM)) printTBuf();
+	}else{
+		for(i = 0; i < dev_amount; i++){
+			MSG("Device ", "ow");
+			USB_Send_Data(i + '0');
+			MSG(": ", 0);
+			if(OW_WriteCmd(OW_MATCH_ROM)){
+				OW_SendOnly(0, &ID_buf[i*8], 8);
+				printTBuf();
+			}
+		}
+	}
+}
+*/

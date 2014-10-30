@@ -1,5 +1,5 @@
 /*
- * uart.h
+ * sensors.c - funtions to work with end-switches & MOSFETs
  *
  * Copyright 2014 Edward V. Emelianov <eddy@sao.ru, edward.emelianoff@gmail.com>
  *
@@ -19,30 +19,6 @@
  * MA 02110-1301, USA.
  */
 
-#pragma once
-#ifndef __UART_H__
-#define __UART_H__
+#include "main.h"
+#include "sensors.h"
 
-// Size of buffers
-#define UART_TX_DATA_SIZE            128
-
-typedef struct {
-	uint8_t buf[UART_TX_DATA_SIZE];
-	uint8_t start; // index from where to start reading
-	uint8_t end;   // index from where to start writing
-} UART_buff;
-
-void UART_init(uint32_t UART);
-void UART_setspeed(uint32_t UART, struct usb_cdc_line_coding *linecoding);
-
-void fill_uart_buff(uint32_t UART, uint8_t byte);
-void uart1_send(uint8_t byte);
-void uart2_send(uint8_t byte);
-void uart3_send(uint8_t byte);
-
-void check_and_parce_UART(uint32_t UART);
-
-UART_buff *get_uart_buffer(uint32_t UART);
-
-
-#endif // __UART_H__

@@ -26,6 +26,8 @@
 
 // integer value given by user
 static volatile int32_t User_value = 0;
+// number of motor to process
+static volatile uint8_t active_motor = 6;
 // last active send function - to post "anonymous" replies
 sendfun lastsendfun = usb_send; // make it usb_send by default (to prevent suspension)
 // flag: !=0 when user value reading ends - for character terminals
@@ -62,7 +64,8 @@ void print_ad_vals(sendfun s){
 
 void parce_incoming_buf(char *buf, int len, sendfun s){
 	uint8_t command;
-	int i = 0, j;
+	uint8_t onewire_addr[8];
+	int i = 0, j, m;
 	lastsendfun = s;
 	if(Uval_ready == UVAL_START){ // we are in process of user's value reading
 		i += read_int(buf, len);
@@ -78,11 +81,40 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 	for(; i < len; i++){
 		command = buf[i];
 		if(!command) continue; // omit zero
-		switch (command){
-			case '1': // single conversion
+		if(command >= '0' && command <= '4'){ // stepper motors
+			active_motor = command - '0';
+			I = stepper_proc;
+			READINT();
+		}else switch (command){
+			case 'P':
+				run_dmatimer();
+			break;
+			case 'x': // set period of TIM1 (motors 1..3)
+				active_motor = 1;
+				I = set_timr;
+				READINT();
+			break;
+			case 'X': // set period of TIM2 (motors 4,5)
+				active_motor = 4;
+				I = set_timr;
+				READINT();
+			break;
+			case 'B': // stop all motors
+				for(m = 0; m < 5; m++)
+					stop_motor(m);
+			break;
+			case 'W': // scan for one 1-wire device
+				if(1 == OW_Scan(onewire_addr, 1)){
+					P("found 1-wire: ", s);
+					print_hex(onewire_addr, 8, s);
+				}else
+					P("1-wire error",s );
+				P("\r\n", s);
+			break;
+			case 'S': // single conversion
 				doubleconv = 0;
 			break;
-			case '2': // double conversion
+			case 'D': // double conversion
 				doubleconv = 1;
 			break;
 			case 'A': // show ADC value
@@ -94,18 +126,11 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 				}
 				newline(s);
 			break;
-			case 'b': // turn LED off
-				gpio_set(GPIOC, GPIO12);
-			break;
-			case 'B': // turn LED on
-				gpio_clear(GPIOC, GPIO12);
-			break;
-			case 'I': // read & print integer value
-				I = process_int;
-				READINT();
-			break;
 			case 'i': // init AD7794
 				AD7794_init();
+			break;
+			case 'I': // turn off flag AD7794
+				ad7794_on = 0;
 			break;
 			case '+': // user check number value & confirm it's right
 				if(Uval_ready == UVAL_PRINTED) Uval_ready = UVAL_CHECKED;
@@ -140,9 +165,9 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 				print_time(s);
 				newline(s);
 			break;
-			case 'U': // test: init USART1
+		/*	case 'U': // test: init USART1
 				UART_init(USART1);
-			break;
+			break; */
 			case '\n': // show newline as is
 			break;
 			case '\r':
@@ -211,6 +236,27 @@ int read_int(char *buf, int cnt){
 }
 
 /**
+ * Print buff as hex values
+ * @param buf - buffer to print
+ * @param l   - buf length
+ * @param s   - function to send a byte
+ */
+void print_hex(uint8_t *buff, uint8_t l, sendfun s){
+	void putc(uint8_t c){
+		if(c < 10)
+			s(c + '0');
+		else
+			s(c + 'a' - 10);
+	}
+	s('0'); s('x'); // prefix 0x
+	while(l--){
+		putc(buff[l] >> 4);
+		putc(buff[l] & 0x0f);
+	}
+}
+
+
+/**
  * Print decimal integer value
  * @param N - value to print
  * @param s - function to send a byte
@@ -230,12 +276,14 @@ void print_int(int32_t N, sendfun s){
 	}else s('0');
 }
 
+/*
 void process_int(int32_t v, sendfun s){
 	newline(s);
 	P("You have entered a value ", s);
 	print_int(v, s);
 	newline(s);
 }
+*/
 
 void set_ADC_gain(int32_t v, sendfun s){
 	if(ad7794_on){
@@ -245,4 +293,35 @@ void set_ADC_gain(int32_t v, sendfun s){
 		change_AD7794_gain(v);
 		AD7794_calibration(0);
 	}
+}
+
+/**
+ * Process stepper
+ * @param v - user value
+ * @param s - active sendfunction
+ */
+void stepper_proc(int32_t v, sendfun s){
+	if(active_motor > 4){
+		P("wrong motor number\r\n", s);
+		return; // error
+	}
+	MSG("move ");
+	lastsendfun('0' + active_motor);
+	MSG(" to ");
+	print_int(v, lastsendfun);
+	MSG("\r\n");
+	move_motor(active_motor, v);
+	active_motor = 6;
+}
+
+void set_timr(int32_t v, sendfun s){
+	if(active_motor > 4){
+		P("wrong motor number\r\n", s);
+		return; // error
+	}
+	MSG("set period: ");
+	print_int(v, lastsendfun);
+	MSG("\r\n");
+	set_motor_period(active_motor, (uint16_t)v);
+	active_motor = 6;
 }

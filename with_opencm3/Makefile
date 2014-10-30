@@ -1,16 +1,17 @@
 BINARY		= ircontroller
 BOOTPORT	?= /dev/ttyUSB0
 BOOTSPEED	?= 115200
-LDSCRIPT	= stm32-h103.ld
+# change this linking script depending on particular MCU model,
+# for example, if you have STM32F103VBT6, you should write:
+LDSCRIPT	= ld/stm32f103xB.ld
 LIBNAME		= opencm3_stm32f1
-DEFS		= -DSTM32F1 
+DEFS		= -DSTM32F1 -DEBUG
 
 OBJDIR = mk
 INDEPENDENT_HEADERS=
 
 FP_FLAGS	?= -msoft-float
 ARCH_FLAGS	= -mthumb -mcpu=cortex-m3 $(FP_FLAGS) -mfix-cortex-m3-ldrd
-
 
 ###############################################################################
 # Executables
@@ -46,7 +47,7 @@ SCRIPT_DIR	= $(OPENCM3_DIR)/scripts
 ###############################################################################
 # C flags
 CFLAGS		+= -Os -g
-CFLAGS		+= -Wextra -Wshadow -Wimplicit-function-declaration
+CFLAGS		+= -Wall -Wextra -Wshadow -Wimplicit-function-declaration
 CFLAGS		+= -Wredundant-decls
 # -Wmissing-prototypes -Wstrict-prototypes
 CFLAGS		+= -fno-common -ffunction-sections -fdata-sections
