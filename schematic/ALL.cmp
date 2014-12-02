@@ -1,4 +1,4 @@
-Cmp-Mod V01 Created by CvPcb (2013-feb-26)-stable date = Пн 21 июл 2014 09:59:27
+Cmp-Mod V01 Created by CvPcb (2013-feb-26)-stable date = Вс 30 ноя 2014 15:38:41
 
 BeginCmp
 TimeStamp = /53A910B8/50AF1E60;
@@ -211,6 +211,13 @@ IdModule  = SM0805;
 EndCmp
 
 BeginCmp
+TimeStamp = /547DB437;
+Reference = C19;
+ValeurCmp = 1u;
+IdModule  = SM0805;
+EndCmp
+
+BeginCmp
 TimeStamp = /53973803/53976CAB/53BE6988;
 Reference = CON1;
 ValeurCmp = USB-MICRO-B;
@@ -229,6 +236,13 @@ TimeStamp = /53AE6F08/53C09F3E;
 Reference = DA2;
 ValeurCmp = TLE5205;
 IdModule  = TO220-7-12;
+EndCmp
+
+BeginCmp
+TimeStamp = /5477C0AD;
+Reference = DA3;
+ValeurCmp = RO-1205;
+IdModule  = SIP-4-RO;
 EndCmp
 
 BeginCmp
@@ -309,6 +323,48 @@ IdModule  = hc49;
 EndCmp
 
 BeginCmp
+TimeStamp = /54770F82;
+Reference = HOLE1;
+ValeurCmp = 3mm;
+IdModule  = hole_3mm;
+EndCmp
+
+BeginCmp
+TimeStamp = /54775C06;
+Reference = HOLE2;
+ValeurCmp = 3mm;
+IdModule  = hole_3mm;
+EndCmp
+
+BeginCmp
+TimeStamp = /54774C57;
+Reference = HOLE3;
+ValeurCmp = 3mm;
+IdModule  = hole_3mm;
+EndCmp
+
+BeginCmp
+TimeStamp = /54775C0C;
+Reference = HOLE4;
+ValeurCmp = 3mm;
+IdModule  = hole_3mm;
+EndCmp
+
+BeginCmp
+TimeStamp = /547759FC;
+Reference = HOLE5;
+ValeurCmp = 3mm;
+IdModule  = hole_3mm;
+EndCmp
+
+BeginCmp
+TimeStamp = /54775C12;
+Reference = HOLE6;
+ValeurCmp = 3mm;
+IdModule  = hole_3mm;
+EndCmp
+
+BeginCmp
 TimeStamp = /53973803/53973C3F;
 Reference = L1;
 ValeurCmp = BMB2A0300AN1;
@@ -316,73 +372,87 @@ IdModule  = SM0805;
 EndCmp
 
 BeginCmp
+TimeStamp = /5474C8E5;
+Reference = P1;
+ValeurCmp = CONN_1;
+IdModule  = PIN_ARRAY_1;
+EndCmp
+
+BeginCmp
+TimeStamp = /5474762D;
+Reference = P2;
+ValeurCmp = CONN_1;
+IdModule  = PIN_ARRAY_1;
+EndCmp
+
+BeginCmp
 TimeStamp = /53A910B8/50CEB97A;
 Reference = R1.1;
 ValeurCmp = 0.33;
-IdModule  = SM1210;
+IdModule  = SM-2010;
 EndCmp
 
 BeginCmp
 TimeStamp = /53A910B7/50CEB97A;
 Reference = R1.2;
 ValeurCmp = 0.33;
-IdModule  = SM1210;
+IdModule  = SM-2010;
 EndCmp
 
 BeginCmp
 TimeStamp = /5391724D/50CEB97A;
 Reference = R1.3;
 ValeurCmp = 0.33;
-IdModule  = SM1210;
+IdModule  = SM-2010;
 EndCmp
 
 BeginCmp
 TimeStamp = /53A910BA/50CEB97A;
 Reference = R1.4;
 ValeurCmp = 0.33;
-IdModule  = SM1210;
+IdModule  = SM-2010;
 EndCmp
 
 BeginCmp
 TimeStamp = /53A910B9/50CEB97A;
 Reference = R1.5;
 ValeurCmp = 0.33;
-IdModule  = SM1210;
+IdModule  = SM-2010;
 EndCmp
 
 BeginCmp
 TimeStamp = /53A910B8/50CEB99A;
 Reference = R2.1;
 ValeurCmp = 0.33;
-IdModule  = SM1210;
+IdModule  = SM-2010;
 EndCmp
 
 BeginCmp
 TimeStamp = /53A910B7/50CEB99A;
 Reference = R2.2;
 ValeurCmp = 0.33;
-IdModule  = SM1210;
+IdModule  = SM-2010;
 EndCmp
 
 BeginCmp
 TimeStamp = /5391724D/50CEB99A;
 Reference = R2.3;
 ValeurCmp = 0.33;
-IdModule  = SM1210;
+IdModule  = SM-2010;
 EndCmp
 
 BeginCmp
 TimeStamp = /53A910BA/50CEB99A;
 Reference = R2.4;
 ValeurCmp = 0.33;
-IdModule  = SM1210;
+IdModule  = SM-2010;
 EndCmp
 
 BeginCmp
 TimeStamp = /53A910B9/50CEB99A;
 Reference = R2.5;
 ValeurCmp = 0.33;
-IdModule  = SM1210;
+IdModule  = SM-2010;
 EndCmp
 
 BeginCmp
@@ -771,6 +841,34 @@ IdModule  = SM1206;
 EndCmp
 
 BeginCmp
+TimeStamp = /53AE6F08/54658717;
+Reference = R41;
+ValeurCmp = 56k;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /53AE6F08/5465870A;
+Reference = R42;
+ValeurCmp = 4.7k;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /546A5B54;
+Reference = R43;
+ValeurCmp = 12k;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /546A5949;
+Reference = R44;
+ValeurCmp = 4.7k;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
 TimeStamp = /53973803/5399B811;
 Reference = SB1;
 ValeurCmp = RESET;
@@ -782,6 +880,13 @@ TimeStamp = /53973803/53A4246E;
 Reference = SB2;
 ValeurCmp = BOOT;
 IdModule  = SPST;
+EndCmp
+
+BeginCmp
+TimeStamp = /547C3BA5;
+Reference = U1;
+ValeurCmp = LM7805CT;
+IdModule  = TO220_VERT;
 EndCmp
 
 BeginCmp
@@ -815,14 +920,14 @@ EndCmp
 BeginCmp
 TimeStamp = /53AA0E2D/53AF4F62;
 Reference = VT2.1;
-ValeurCmp = NTE2984;
+ValeurCmp = FQP30N06;
 IdModule  = TO220-3-vert;
 EndCmp
 
 BeginCmp
 TimeStamp = /53A8FBFD/53AF4F62;
 Reference = VT2.2;
-ValeurCmp = NTE2984;
+ValeurCmp = FQP30N06;
 IdModule  = TO220-3-vert;
 EndCmp
 
@@ -864,8 +969,8 @@ EndCmp
 BeginCmp
 TimeStamp = /53973803/53974779/53AB4443;
 Reference = XP6;
-ValeurCmp = DB9;
-IdModule  = DB9FC;
+ValeurCmp = DB9-M;
+IdModule  = DB9-M;
 EndCmp
 
 BeginCmp
@@ -878,8 +983,8 @@ EndCmp
 BeginCmp
 TimeStamp = /53973803/53974779/53975A15;
 Reference = XS1;
-ValeurCmp = DB9;
-IdModule  = DB9FC;
+ValeurCmp = DB9-F;
+IdModule  = DB9-F;
 EndCmp
 
 EndListe

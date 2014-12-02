@@ -64,7 +64,6 @@ void print_ad_vals(sendfun s){
 
 void parce_incoming_buf(char *buf, int len, sendfun s){
 	uint8_t command;
-	uint8_t onewire_addr[8];
 	int i = 0, j, m;
 	lastsendfun = s;
 	if(Uval_ready == UVAL_START){ // we are in process of user's value reading
@@ -87,7 +86,7 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 			READINT();
 		}else switch (command){
 			case 'P':
-				run_dmatimer();
+				OW_fill_ID(0);
 			break;
 			case 'x': // set period of TIM1 (motors 1..3)
 				active_motor = 1;
@@ -103,14 +102,14 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 				for(m = 0; m < 5; m++)
 					stop_motor(m);
 			break;
-			case 'W': // scan for one 1-wire device
+		/*	case 'W': // scan for one 1-wire device
 				if(1 == OW_Scan(onewire_addr, 1)){
 					P("found 1-wire: ", s);
 					print_hex(onewire_addr, 8, s);
 				}else
 					P("1-wire error",s );
 				P("\r\n", s);
-			break;
+			break;*/
 			case 'S': // single conversion
 				doubleconv = 0;
 			break;

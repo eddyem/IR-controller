@@ -18,35 +18,120 @@
  */
 #include "onewire.h"
 
-#define OW_0	0x00
-#define OW_1	0xff
-#define OW_R	0xff
-#define OW_RST	0xf0
-
-
+OW_ID id_array[OW_MAX_NUM]; // 1-wire devices ID buffer (not more than eight)
 uint8_t dev_amount = 0;   // amount of 1-wire devices
-uint8_t ID_buf[64] = {0}; // 1-wire devices ID buffer (8 bytes for every device)
-uint8_t NUM_buf[8] = {0}; // numerical identificators for each sensor
+
+// states of 1-wire processing queue
+typedef enum{
+	OW_OFF_STATE,    // not working
+	OW_RESET_STATE,  // reset bus
+	OW_SEND_STATE,   // send data
+	OW_READ_STATE,   // wait for reading
+} OW_States;
+
+OW_States OW_State = OW_OFF_STATE; // 1-wire state, 0-not runned
+uint8_t OW_wait_bytes = 0;   // amount of bytes needed to read
+uint8_t OW_start_idx = 0;    // starting index to read from 1-wire buffer
+uint8_t *read_buf = NULL;    // buffer to read
+
+uint8_t ow_data_ready = 0;   // flag of reading OK
 
 /**
- * this function sends bits of ow_byte (LSB first) to 1-wire line
- * @param ow_byte - byte to convert
- * @param Nbits   - number of bits to send
+ * fill buffer with zeros - read slots
+ * @param N - amount of bytes to read
  */
-void OW_SendBits(uint8_t ow_byte, uint8_t Nbits){
-	uint8_t i, byte;
-	if(Nbits == 0) return;
-	if(Nbits > 8) Nbits = 8;
-	for(i = 0; i < Nbits; i++){
-		if(ow_byte & 0x01){
-			byte = OW_1;
-		}else{
-			byte = OW_0;
-		}
-		fill_uart_buff(OW_USART_X, byte); // send next "bit"
-		ow_byte = ow_byte >> 1;
+uint8_t OW_Read(uint8_t N){
+	uint8_t i;
+	for(i = 0; i < N; i++)
+		if(!OW_add_byte(0, 8, 0))
+			return 0;
+	return 1;
+}
+
+uint8_t ow_was_reseting = 0;
+
+void OW_process(){
+	switch(OW_State){
+		case OW_OFF_STATE:
+			return;
+		break;
+		case OW_RESET_STATE:
+			OW_State = OW_SEND_STATE;
+			ow_was_reseting = 1;
+			ow_reset();
+			MSG("reset\n");
+		break;
+		case OW_SEND_STATE:
+			if(!OW_READY()) return; // reset in work
+			if(ow_was_reseting){
+				if(!OW_get_reset_status()){
+					MSG("error: no devices found\n");
+					ow_was_reseting = 0;
+					OW_State = OW_OFF_STATE;
+					return;
+				}
+			}
+			ow_was_reseting = 0;
+			OW_State = OW_READ_STATE;
+			run_dmatimer(); // turn on data transfer
+			MSG("send\n");
+		break;
+		case OW_READ_STATE:
+			if(!OW_READY()) return; // data isn't ready
+			OW_State = OW_OFF_STATE;
+			adc_dma_on(); // return DMA1_1 to ADC at end of data transmitting
+			if(read_buf){
+				read_from_OWbuf(OW_start_idx, OW_wait_bytes, read_buf);
+			}
+			ow_data_ready = 1;
+			MSG("read\n");
+		break;
 	}
 }
+
+/**
+ * fill Nth array with identificators
+ */
+void OW_fill_ID(uint8_t N){
+	if(N >= OW_MAX_NUM){
+		MSG("number too big\n");
+		return;
+	}
+	OW_Send(1, (uint8_t*)"\xcc\x33", 2);
+	OW_Read(8); // wait for 8 bytes
+	read_buf = id_array[N].bytes;
+	OW_wait_bytes = 8;
+	OW_start_idx = 16;
+}
+
+/**
+ * Procedure of 1-wire communications
+ * variables:
+ * @param sendReset - send RESET before transmission
+ * @param command - bytes sent to the bus (if we want to read, send OW_READ_SLOT)
+ * @param cLen - command buffer length (how many bytes to send)
+ * @return 1 if succeed, 0 if failure
+ */
+uint8_t OW_Send(uint8_t sendReset, uint8_t *command, uint8_t cLen){
+	uint8_t f = 1;
+	ow_dma_on(); // reconfigure DMA1
+	ow_data_ready = 0;
+	// if reset needed - send RESET and check bus
+	if(sendReset)
+		OW_State = OW_RESET_STATE;
+	else
+		OW_State = OW_SEND_STATE;
+	while(cLen-- > 0){
+		if(!OW_add_byte(*command, 8, f)) return 0;
+		command++;
+		f = 0;
+	}
+	return 1;
+}
+
+
+#if 0
+
 
 void OW_ClearBuff(){
 	UART_buff *curbuff = get_uart_buffer(OW_USART_X);
@@ -74,19 +159,7 @@ newline(lastsendfun);
 }
 
 
-/*
- * Configure peripherial ports (USART2) for 1-wire
-  */
-void OW_Init(){
-	struct usb_cdc_line_coding owlc = {
-		.dwDTERate   = 115200,
-		.bCharFormat = USB_CDC_1_STOP_BITS,
-		.bParityType = USB_CDC_NO_PARITY,
-		.bDataBits   = 8,
-	};
-	UART_init(OW_USART_X);
-	UART_setspeed(OW_USART_X, &owlc);
-}
+
 
 /*
  * 1-wire reset
@@ -120,27 +193,7 @@ uint8_t OW_Reset(){
 	return 0;
 }
 
-/**
- * Procedure of 1-wire communications
- * variables:
- * @param sendReset - send RESET before transmission
- * @param command - bytes sent to the bus (if we want to read, send OW_READ_SLOT)
- * @param cLen - command buffer length (how many bytes to send)
- * @return 1 if succeed, 0 if failure
- */
-uint8_t OW_Send(uint8_t sendReset, uint8_t *command, uint8_t cLen){
-	// if reset needed - send RESET and check bus
-	if(sendReset){
-		if(OW_Reset() == 0){
-			return 0;
-		}
-	}
-	while(cLen-- > 0){
-		OW_SendBits(*command, 8);
-		command++;
-	}
-	return 1;
-}
+
 
 /**
  * Check USART IN buffer for ready & fill user buffer with data on success
@@ -257,3 +310,5 @@ void OW_getTemp(){
 	}
 }
 */
+
+#endif

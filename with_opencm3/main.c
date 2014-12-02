@@ -157,7 +157,7 @@ int main(){
 	usbd_dev = USB_init();
 
 	// init ADC
-//	ADC_init();
+	ADC_init();
 
 	// SysTick is a system timer with 1mc period
 	SysTick_init();
@@ -168,15 +168,14 @@ int main(){
 
 	switch_SPI(SPI1); // init SPI1
 	SPI_init();
-	//OW_Init();
+	init_ow_dmatimer();
 
 	// wait a little and then turn on USB pullup
 	for (i = 0; i < 0x800000; i++)
 		__asm__("nop");
 	usb_connect(); // turn on USB
 
-	//ADC_calibrate_and_start();
-init_dmatimer();
+	ADC_calibrate_and_start();
 	while(1){
 		usbd_poll(usbd_dev);
 		if(usbdatalen){ // there's something in USB buffer
@@ -190,9 +189,15 @@ init_dmatimer();
 				read_next_TRD();
 			}
 		}
+		OW_process(); // process 1-wire commands
+		if(OW_DATA_READY()){
+			OW_CLEAR_READY_FLAG();
+			MSG("Ready!\n");
+		}
 		process_stepper_motors(); // check flags of motors' timers
 		if(Timer - Old_timer > 999){ // one-second cycle
 			Old_timer += 1000;
+//OW_fill_ID(0);
 			//gpio_toggle(GPIOC, GPIO12); // toggle LED
 			//gpio_toggle(GPIO_BANK_SPI2_MOSI, GPIO_SPI2_MOSI);
 			//gpio_toggle(GPIO_BANK_SPI2_SCK, GPIO_SPI2_SCK);

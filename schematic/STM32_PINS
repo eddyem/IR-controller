@@ -23,8 +23,8 @@ Functional map of MCU pins
 020     VREF-   ref (0v)
 021     VREF+   ref (+3.3v)
 022     VDDA    +3.3V analog
-023     -
-024     -     
+023     PA0     U10_ADC          10..12V voltage control
+024     PA1     U36_ADC          36V voltage control
 025     PA2     1WIRE_TX         1-wire interface
 026     PA3     1WIRE_RX
 027     VSS     GND

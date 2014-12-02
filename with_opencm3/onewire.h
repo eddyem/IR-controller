@@ -33,8 +33,24 @@
 
 #define OW_READ_SLOT	(uint8_t*)"0xff"
 
-void OW_Init();
+typedef struct{
+	uint8_t bytes[8];
+} OW_ID;
+
+#define OW_MAX_NUM 8
+
+extern uint8_t ow_data_ready;
+#define OW_DATA_READY()       (ow_data_ready)
+#define OW_CLEAR_READY_FLAG() do{ow_data_ready = 0;}while(0)
+void OW_process();
+void OW_fill_ID(uint8_t N);
+
 uint8_t OW_Send(uint8_t sendReset, uint8_t *command, uint8_t cLen);
+
+
+#if 0
+
+
 uint8_t OW_Get(uint8_t buflen, uint8_t *data, uint8_t readStart);
 uint8_t OW_Scan(uint8_t *buf, uint8_t num);
 
@@ -48,6 +64,9 @@ uint8_t OW_Scan(uint8_t *buf, uint8_t num);
 #define OW_Wait_TX() while(!(USART_SR(OW_USART_X) & USART_SR_TC))
 
 void OW_getTemp();
+
+
+#endif
 
 /*
  * thermometer identificator is: 8bits CRC, 48bits serial, 8bits device code (10h)

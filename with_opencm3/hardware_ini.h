@@ -23,11 +23,18 @@
 #ifndef __HARDWARE_INI_H__
 #define __HARDWARE_INI_H__
 
-
+#define TIM2_DMABUFF_SIZE 128
+// 1-wire zero-state lengths (in us minus 1)
+#define OW_1       (9)
+#define OW_0       (69)
+#define OW_READ1   (14)
+#define OW_BIT     (79)
+#define OW_RESET   (499)
+#define OW_PRESENT (599)
 
 extern volatile uint16_t ADC_value[]; // ADC DMA value
 
-#define TRD_NO			8 // number of TRD devices
+#define TRD_NO			(8) // number of TRD devices
 // bits used to address external SPI ADC - PD10..12
 #define ADC_ADDR_MASK	(GPIO10|GPIO11|GPIO12)
 #define ADC_SET_ADDR(X)	((X << 10) & ADC_ADDR_MASK)
@@ -88,7 +95,14 @@ void ADC_calibrate_and_start();
 #define OW_RX_PORT			GPIO_BANK_USART2_RX
 #define OW_RX_PIN			GPIO_USART2_RX
 
-void init_dmatimer();
+void init_ow_dmatimer();
 void run_dmatimer();
-
+extern uint8_t ow_done;
+#define OW_READY()  (ow_done)
+void ow_dma_on();
+void adc_dma_on();
+uint8_t OW_add_byte(uint8_t ow_byte, uint8_t Nbits, uint8_t ini);
+void read_from_OWbuf(uint8_t start_idx, uint8_t N, uint8_t *outbuf);
+void ow_reset();
+uint8_t OW_get_reset_status();
 #endif // __HARDWARE_INI_H__
