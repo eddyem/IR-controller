@@ -87,6 +87,7 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 		}else switch (command){
 			case 'P':
 				OW_fill_ID(0);
+				//run_dmatimer();
 			break;
 			case 'x': // set period of TIM1 (motors 1..3)
 				active_motor = 1;
@@ -108,7 +109,7 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 					print_hex(onewire_addr, 8, s);
 				}else
 					P("1-wire error",s );
-				P("\r\n", s);
+				P("\n", s);
 			break;*/
 			case 'S': // single conversion
 				doubleconv = 0;
@@ -118,7 +119,7 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 			break;
 			case 'A': // show ADC value
 				//adc_start_conversion_direct(ADC1);
-				P("\r\n ADC value: ", s);
+				P("\n ADC value: ", s);
 				for(j = 0; j < 8; j++){
 					print_int(ADC_value[j], s);
 					P("\t", s);
@@ -153,9 +154,9 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 				print_ad_vals(s);
 			break;
 			case 'u': // check USB connection
-				P("\r\nUSB ", s);
+				P("\nUSB ", s);
 				if(!USB_connected) P("dis", s);
-				P("connected\r\n",s);
+				P("connected\n",s);
 			break;
 			case 'M': // ADC monitoring ON
 				ADC_monitoring = !ADC_monitoring;
@@ -188,7 +189,7 @@ void prnt(uint8_t *wrd, sendfun s){
 
 /*
 void newline(sendfun s){
-	P("\r\n", s);
+	P("\n", s);
 }
 */
 
@@ -301,26 +302,26 @@ void set_ADC_gain(int32_t v, sendfun s){
  */
 void stepper_proc(int32_t v, sendfun s){
 	if(active_motor > 4){
-		P("wrong motor number\r\n", s);
+		P("wrong motor number\n", s);
 		return; // error
 	}
-	MSG("move ");
-	lastsendfun('0' + active_motor);
-	MSG(" to ");
-	print_int(v, lastsendfun);
-	MSG("\r\n");
 	move_motor(active_motor, v);
 	active_motor = 6;
 }
 
 void set_timr(int32_t v, sendfun s){
 	if(active_motor > 4){
-		P("wrong motor number\r\n", s);
+		P("wrong motor number\n", s);
 		return; // error
+	}
+	if(v < 0 || v > 0xffff){
+		MSG("Bad period!\n");
+		active_motor = 6;
+		return;
 	}
 	MSG("set period: ");
 	print_int(v, lastsendfun);
-	MSG("\r\n");
+	MSG("\n");
 	set_motor_period(active_motor, (uint16_t)v);
 	active_motor = 6;
 }

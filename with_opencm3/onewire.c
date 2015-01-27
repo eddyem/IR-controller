@@ -36,16 +36,21 @@ uint8_t *read_buf = NULL;    // buffer to read
 
 uint8_t ow_data_ready = 0;   // flag of reading OK
 
-/**
- * fill buffer with zeros - read slots
- * @param N - amount of bytes to read
- */
-uint8_t OW_Read(uint8_t N){
-	uint8_t i;
-	for(i = 0; i < N; i++)
-		if(!OW_add_byte(0, 8, 0))
-			return 0;
-	return 1;
+void OW_printID(uint8_t N, sendfun s){
+	void putc(uint8_t c){
+		if(c < 10)
+			s(c + '0');
+		else
+			s(c + 'a' - 10);
+	}
+	int i;
+	uint8_t *b = id_array[N].bytes;
+	s('0'); s('x'); // prefix 0x
+	for(i = 0; i < 8; i++){
+		putc(b[i] >> 4);
+		putc(b[i] & 0x0f);
+	}
+	s('\n');
 }
 
 uint8_t ow_was_reseting = 0;
@@ -59,22 +64,22 @@ void OW_process(){
 			OW_State = OW_SEND_STATE;
 			ow_was_reseting = 1;
 			ow_reset();
-			MSG("reset\n");
+			//MSG("reset\n");
 		break;
 		case OW_SEND_STATE:
 			if(!OW_READY()) return; // reset in work
 			if(ow_was_reseting){
 				if(!OW_get_reset_status()){
-					MSG("error: no devices found\n");
+					MSG("error: no 1-wire devices found\n");
 					ow_was_reseting = 0;
-					OW_State = OW_OFF_STATE;
-					return;
+				//	OW_State = OW_OFF_STATE;
+				//	return;
 				}
 			}
 			ow_was_reseting = 0;
 			OW_State = OW_READ_STATE;
 			run_dmatimer(); // turn on data transfer
-			MSG("send\n");
+			//MSG("send\n");
 		break;
 		case OW_READ_STATE:
 			if(!OW_READY()) return; // data isn't ready
@@ -84,7 +89,7 @@ void OW_process(){
 				read_from_OWbuf(OW_start_idx, OW_wait_bytes, read_buf);
 			}
 			ow_data_ready = 1;
-			MSG("read\n");
+			//MSG("read\n");
 		break;
 	}
 }
@@ -92,16 +97,28 @@ void OW_process(){
 /**
  * fill Nth array with identificators
  */
+//uint8_t comtosend = 0;
 void OW_fill_ID(uint8_t N){
 	if(N >= OW_MAX_NUM){
 		MSG("number too big\n");
 		return;
 	}
-	OW_Send(1, (uint8_t*)"\xcc\x33", 2);
-	OW_Read(8); // wait for 8 bytes
+	//OW_Send(1, (uint8_t*)"\xcc\x33", 2);
+	OW_Send(1, (uint8_t*)"\x19", 1);
+//	OW_Send(1, &comtosend, 1);
+//	comtosend++;
+	//OW_Send(1, (uint8_t*)"\xcc\xbe", 2);
+	OW_add_read_seq(9); // wait for 9 bytes
+	//OW_Send(0, (uint8_t*)"\xcc\x33\x10\x45\x94\x67\x7e\x8a", 8);
 	read_buf = id_array[N].bytes;
 	OW_wait_bytes = 8;
-	OW_start_idx = 16;
+	OW_start_idx = 0;
+/*
+	OW_Send(0, (uint8_t*)"\x99\xee", 2);
+	OW_wait_bytes = 2;
+	OW_start_idx = 0;
+	read_buf = id_array[N].bytes;
+*/
 }
 
 /**
@@ -114,7 +131,6 @@ void OW_fill_ID(uint8_t N){
  */
 uint8_t OW_Send(uint8_t sendReset, uint8_t *command, uint8_t cLen){
 	uint8_t f = 1;
-	ow_dma_on(); // reconfigure DMA1
 	ow_data_ready = 0;
 	// if reset needed - send RESET and check bus
 	if(sendReset)

@@ -198,15 +198,17 @@ static int cdcacm_control_request(usbd_device *usbd_dev, struct usb_setup_data *
 
 	switch (req->bRequest) {
 	case SET_CONTROL_LINE_STATE:{
-P("SET_CONTROL_LINE_STATE\r\n", uart1_send);
-print_int(req->wValue, uart1_send);
-newline(uart1_send);
+#ifdef EBUG
+		P("SET_CONTROL_LINE_STATE\n", uart1_send);
+		print_int(req->wValue, uart1_send);
+		newline(uart1_send);
+#endif
 		if(req->wValue){ // terminal is opened
 			USB_connected = 1;
-			//P("\r\n\tUSB connected!\r\n", uart1_send);
+			//P("\n\tUSB connected!\n", uart1_send);
 		}else{ // terminal is closed
 			USB_connected = 0;
-			//P("\r\n\tUSB disconnected!\r\n", uart1_send);
+			//P("\n\tUSB disconnected!\n", uart1_send);
 		}
 		/*
 		 * This Linux cdc_acm driver requires this to be implemented
@@ -225,11 +227,15 @@ newline(uart1_send);
 		usbd_ep_write_packet(usbd_dev, 0x83, local_buf, 10);
 	}break;
 	case SET_LINE_CODING:
-P("SET_LINE_CODING, len=", uart1_send);
+#ifdef EBUG
+		P("SET_LINE_CODING, len=", uart1_send);
+#endif
 		if (!len || (*len != sizeof(struct usb_cdc_line_coding)))
 			return 0;
-print_int(*len, uart1_send);
-newline(uart1_send);
+#ifdef EBUG
+		print_int(*len, uart1_send);
+		newline(uart1_send);
+#endif
 		memcpy((void *)&lc, (void *)*buf, *len);
 		// Mark & Space parity don't support by hardware, check it
 		if(lc.bParityType == USB_CDC_MARK_PARITY || lc.bParityType == USB_CDC_SPACE_PARITY){
@@ -243,10 +249,14 @@ newline(uart1_send);
 		if(len && *len == sizeof(struct usb_cdc_line_coding))
 			memcpy((void *)*buf, (void *)&linecoding, sizeof(struct usb_cdc_line_coding));
 		//usbd_ep_write_packet(usbd_dev, 0x83, (char*)&linecoding, sizeof(linecoding));
-P("GET_LINE_CODING\r\n", uart1_send);
+#ifdef EBUG
+		P("GET_LINE_CODING\n", uart1_send);
+#endif
 	break;
 	default:
-P("UNKNOWN\r\n", uart1_send);
+#ifdef EBUG
+		P("UNKNOWN\n", uart1_send);
+#endif
 		return 0;
 	}
 	return 1;
@@ -300,11 +310,10 @@ mutex_t send_block_mutex = MUTEX_UNLOCKED;
 void usb_send(uint8_t byte){
 	mutex_lock(&send_block_mutex);
 	USB_Tx_Buffer[USB_Tx_ptr++] = byte;
+	mutex_unlock(&send_block_mutex);
 	if(USB_Tx_ptr == USB_TX_DATA_SIZE){ // buffer can be overflowed - send it!
-		mutex_unlock(&send_block_mutex);
 		usb_send_buffer();
-	}else
-		mutex_unlock(&send_block_mutex);
+	}
 }
 
 /**

@@ -1,10 +1,11 @@
-PCBNEW-LibModule-V1  Ср 12 ноя 2014 16:43:23
+PCBNEW-LibModule-V1  Пн 01 дек 2014 09:34:38
 # encoding utf-8
 Units mm
 $INDEX
 AC_220
 DB9-F
 DB9-M
+HXQFN16
 IRM-10
 MICRO-B-USB
 MINI-B-USB
@@ -249,6 +250,145 @@ Of 0 0 0
 Ro 0 0 0
 $EndSHAPE3D
 $EndMODULE DB9-M
+$MODULE HXQFN16
+Po 0 0 0 15 547C0BEB 00000000 ~~
+Li HXQFN16
+Sc 0
+AR 
+Op 0 0 0
+T0 0 -2.3 0.14986 0.14986 0 0.0381 N V 21 N "Test"
+T1 0 2.3 0.14986 0.14986 0 0.0381 N V 21 N "VAL**"
+DS -1 1.6 -1.5 1 0.15 21
+DS -1.5 1 -1.8 1 0.15 21
+DS -1.8 1 -1 2 0.15 21
+DS -1 2 -1 1.6 0.15 21
+DS 1.5 1.1 1.5 1.2 0.15 21
+DS 1.5 1.2 1.5 1.5 0.15 21
+DS 1.5 1.5 1.1 1.5 0.15 21
+DS -1.5 -1.1 -1.5 -1.5 0.15 21
+DS -1.5 -1.5 -1.1 -1.5 0.15 21
+DS 1.5 -1.5 1.5 -1.1 0.15 21
+DS 1.1 -1.5 1.5 -1.5 0.15 21
+$PAD
+Sh "1" R 0.3 0.6 0 0 1800
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po -0.75 1.5
+$EndPAD
+$PAD
+Sh "2" R 0.3 0.6 0 0 1800
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po -0.25 1.5
+$EndPAD
+$PAD
+Sh "3" R 0.3 0.6 0 0 1800
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po 0.25 1.5
+$EndPAD
+$PAD
+Sh "4" R 0.3 0.6 0 0 1800
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po 0.75 1.5
+$EndPAD
+$PAD
+Sh "5" R 0.3 0.6 0 0 2700
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po 1.5 0.75
+$EndPAD
+$PAD
+Sh "6" R 0.3 0.6 0 0 2700
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po 1.5 0.25
+$EndPAD
+$PAD
+Sh "7" R 0.3 0.6 0 0 2700
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po 1.5 -0.25
+$EndPAD
+$PAD
+Sh "8" R 0.3 0.6 0 0 2700
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po 1.5 -0.75
+$EndPAD
+$PAD
+Sh "9" R 0.3 0.6 0 0 0
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po 0.75 -1.5
+$EndPAD
+$PAD
+Sh "10" R 0.3 0.6 0 0 0
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po 0.25 -1.5
+$EndPAD
+$PAD
+Sh "11" R 0.3 0.6 0 0 0
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po -0.25 -1.5
+$EndPAD
+$PAD
+Sh "12" R 0.3 0.6 0 0 0
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po -0.75 -1.5
+$EndPAD
+$PAD
+Sh "13" R 0.3 0.6 0 0 900
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po -1.5 -0.75
+$EndPAD
+$PAD
+Sh "14" R 0.3 0.6 0 0 900
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po -1.5 -0.25
+$EndPAD
+$PAD
+Sh "15" R 0.3 0.6 0 0 900
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po -1.5 0.25
+$EndPAD
+$PAD
+Sh "16" R 0.3 0.6 0 0 900
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po -1.5 0.75
+$EndPAD
+$PAD
+Sh "nc" R 1.85 1.85 0 0 0
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po 0 0
+$EndPAD
+$EndMODULE HXQFN16
 $MODULE IRM-10
 Po 0 0 0 15 5461D14B 00000000 ~~
 Li IRM-10
@@ -391,13 +531,13 @@ Po -3.79984 -1.4478
 $EndPAD
 $EndMODULE MICRO-B-USB
 $MODULE MINI-B-USB
-Po 0 0 0 15 53C4D80A 00000000 ~~
+Po 0 0 0 15 54749293 00000000 ~~
 Li MINI-B-USB
 Sc 0
-AR 
+AR /53973803/53976CAB/53BE6988
 Op 0 0 0
-T0 0 -5.842 0.762 0.762 0 0.127 N V 21 N "MINI-B-USB"
-T1 -0.05 2.09 0.762 0.762 0 0.127 N V 21 N "VAL**"
+T0 -4.1275 -5.4045 0.762 0.762 0 0.127 N V 21 N "CON1"
+T1 4.8895 -5.4045 0.762 0.762 0 0.127 N V 21 N "USB-MICRO-B"
 DS -6 5 -6 -4.5 0.3 21
 DS 6 -4.5 6 5 0.3 21
 DS 6 5 -6 5 0.3 21
@@ -406,7 +546,7 @@ DS -8 5.85 8 5.85 0.3 21
 $PAD
 Sh "" C 0.9 0.9 0 0 0
 Dr 0.9 0 0
-At HOLE N 00E0FFFF
+At STD N 0020FFFF
 Ne 0 ""
 Po 2.2 0
 $EndPAD
@@ -414,28 +554,28 @@ $PAD
 Sh "7" R 2 2.5 0 0 0
 Dr 0 0 0
 At SMD N 00888000
-Ne 0 ""
+Ne 1 "GND"
 Po -4.45 2.87
 $EndPAD
 $PAD
 Sh "8" R 2 2.5 0 0 0
 Dr 0 0 0
 At SMD N 00888000
-Ne 0 ""
+Ne 1 "GND"
 Po 4.45 -2.58
 $EndPAD
 $PAD
 Sh "9" R 2 2.5 0 0 0
 Dr 0 0 0
 At SMD N 00888000
-Ne 0 ""
+Ne 1 "GND"
 Po 4.45 2.87
 $EndPAD
 $PAD
 Sh "1" R 0.5 2.25 0 0 0
 Dr 0 0 0
 At SMD N 00888000
-Ne 0 ""
+Ne 4 "N-00000175"
 Po -1.6 -2.58
 .LocalClearance 0.1
 $EndPAD
@@ -443,7 +583,7 @@ $PAD
 Sh "2" R 0.5 2.25 0 0 0
 Dr 0 0 0
 At SMD N 00888000
-Ne 0 ""
+Ne 3 "N-00000171"
 Po -0.8 -2.58
 .LocalClearance 0.1
 $EndPAD
@@ -451,7 +591,7 @@ $PAD
 Sh "3" R 0.5 2.25 0 0 0
 Dr 0 0 0
 At SMD N 00888000
-Ne 0 ""
+Ne 2 "N-00000170"
 Po 0 -2.58
 .LocalClearance 0.1
 $EndPAD
@@ -459,7 +599,7 @@ $PAD
 Sh "4" R 0.5 2.25 0 0 0
 Dr 0 0 0
 At SMD N 00888000
-Ne 0 ""
+Ne 1 "GND"
 Po 0.8 -2.58
 .LocalClearance 0.1
 $EndPAD
@@ -467,7 +607,7 @@ $PAD
 Sh "5" R 0.5 2.25 0 0 0
 Dr 0 0 0
 At SMD N 00888000
-Ne 0 ""
+Ne 1 "GND"
 Po 1.6 -2.58
 .LocalClearance 0.1
 $EndPAD
@@ -475,13 +615,13 @@ $PAD
 Sh "6" R 2 2.5 0 0 0
 Dr 0 0 0
 At SMD N 00888000
-Ne 0 ""
+Ne 1 "GND"
 Po -4.45 -2.58
 $EndPAD
 $PAD
 Sh "" C 0.9 0.9 0 0 0
 Dr 0.9 0 0
-At HOLE N 00E0FFFF
+At STD N 0020FFFF
 Ne 0 ""
 Po -2.2 0
 $EndPAD
@@ -1688,13 +1828,13 @@ Po 59.99734 -2.9972
 $EndPAD
 $EndMODULE gprm1-61
 $MODULE hole_3mm
-Po 0 0 0 15 53C3925D 00000000 ~~
+Po 0 0 0 15 547491FA 00000000 ~~
 Li hole_3mm
 Sc 0
 AR 
 Op 0 0 0
 T0 0 -2.54 1.5 1.5 0 0.3 N I 21 N "hole_3mm"
-T1 0 3.175 1.5 1.5 0 0.3 N V 21 N ""
+T1 0 3.175 1.5 1.5 0 0.3 N V 21 N "Val**"
 DS 0 2.5 0 1.5 0.3 21
 DS -2.5 0 -1.5 0 0.3 21
 DS 2.5 0 1.5 0 0.3 21
@@ -1703,7 +1843,7 @@ DC 0 0 2.5 0 0.3 21
 $PAD
 Sh "" C 3 3 0 0 0
 Dr 3 0 0
-At STD N 00E0FFFF
+At STD N 0020FFFF
 Ne 0 ""
 Po 0 0
 $EndPAD

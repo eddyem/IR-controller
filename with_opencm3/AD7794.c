@@ -105,7 +105,7 @@ uint32_t read_ADC_data(){
  */
 uint8_t check_data_ready(){
 	uint8_t ret = 0;
-	//DBG("check_data_ready\r\n");
+	//DBG("check_data_ready\n");
 	uint8_t x = sendByte(STAT_REGISTER | READ_FROM_REG, 0);
 	if(data_error){
 		DBG("some data error\n");
@@ -231,7 +231,7 @@ uint32_t read_AD7794(uint8_t channel){
 			if(!dr) return AD7794_NOTRDY;
 		break;
 		default: // last step -> return readed data
-//P("\r\n", uart1_send);
+//P("\n", uart1_send);
 			N = 0;
 			return read_ADC_data();
 	}

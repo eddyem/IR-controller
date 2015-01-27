@@ -1,4 +1,4 @@
-eeschema (2013-feb-26)-stable  >> Creation date: Вт 25 ноя 2014 15:57:59
+eeschema (2013-feb-26)-stable  >> Creation date: Пн 12 янв 2015 13:50:38
 #Cmp ( order = Reference )
 | C4         2200u, 40V  
 | C5         10u         
@@ -126,6 +126,7 @@ eeschema (2013-feb-26)-stable  >> Creation date: Вт 25 ноя 2014 15:57:59
 | R6.5       51k         
 | SB1        RESET       
 | SB2        BOOT        
+| U1         LM7805CT    
 | VD1        B120-E3     
 | VD2        PWR         
 | VD3        B120-E3     
@@ -269,6 +270,7 @@ eeschema (2013-feb-26)-stable  >> Creation date: Вт 25 ноя 2014 15:57:59
 | RT0805BRB071KL R34       
 | RESET        SB1       
 | BOOT         SB2       
+| LM7805CT     U1        
 | B120-E3      VD1       
 | B120-E3      VD3       
 | PWR          VD2       

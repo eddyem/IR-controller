@@ -17,6 +17,11 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * TODO:
+ *   implement mutexes for other type of MCU (which doesn't have strex & ldrex)
+ */
+
 #include <libopencm3/cm3/sync.h>
 
 /* DMB is supported on CM0 */

@@ -25,12 +25,13 @@
 
 #define TIM2_DMABUFF_SIZE 128
 // 1-wire zero-state lengths (in us minus 1)
-#define OW_1       (9)
-#define OW_0       (69)
-#define OW_READ1   (14)
-#define OW_BIT     (79)
-#define OW_RESET   (499)
-#define OW_PRESENT (599)
+#define OW_1           (9)
+#define OW_0           (69)
+#define OW_READ1       (14)
+#define OW_BIT         (79)
+#define OW_RESET       (499)
+#define OW_RESET_TIME  (999)
+#define OW_PRESENT     (549)
 
 extern volatile uint16_t ADC_value[]; // ADC DMA value
 
@@ -60,10 +61,10 @@ void ADC_calibrate_and_start();
 // change signal level on USB diconnect pin
 #define usb_disc_high()   gpio_set(USB_DISC_PORT, USB_DISC_PIN)
 #define usb_disc_low()    gpio_clear(USB_DISC_PORT, USB_DISC_PIN)
-// in case of pnp bipolar transistor on 1.5k pull-up disconnect means low level
-// in case of p-channel FET on 1.5k pull-up change on/off disconnect means high level
-#define usb_disconnect()  usb_disc_low()
-#define usb_connect()     usb_disc_high()
+// in case of n-channel FET on 1.5k pull-up change on/off disconnect means low level
+// in case of pnp bipolar transistor or p-channel FET on 1.5k pull-up disconnect means high level
+#define usb_disconnect()  usb_disc_high()
+#define usb_connect()     usb_disc_low()
 
 /*
  * Stepper motors
@@ -71,15 +72,15 @@ void ADC_calibrate_and_start();
  * 		moved to stepper_motors.c
  */
 // PE7..11 - EN
-#define MOROT_EN_MASK		(0x1f << 7)
+#define MOTOR_EN_MASK		(0x1f << 7)
 #define MOTOR_EN_PORT		(GPIOE)
-// N == 1..5
-#define MOTOR_EN_PIN(N)		(GPIO6 << (N))
+// N == 0..4
+#define MOTOR_EN_PIN(N)		(GPIO7 << (N))
 // PE0..PE5 - DIR
-#define MOROT_DIR_MASK		(0x1f)
+#define MOTOR_DIR_MASK		(0x1f)
 #define MOTOR_DIR_PORT		(GPIOE)
-// N == 1..5
-#define MOTOR_DIR_PIN(N)	(GPIO0 << (N - 1))
+// N == 0..4
+#define MOTOR_DIR_PIN(N)	(GPIO0 << (N))
 // timers: TIM1 - PC6, TIM2 - PD15
 #define MOTOR_TIM1_PORT		(GPIOC)
 #define MOTOR_TIM1_PIN		(GPIO6)
@@ -102,6 +103,7 @@ extern uint8_t ow_done;
 void ow_dma_on();
 void adc_dma_on();
 uint8_t OW_add_byte(uint8_t ow_byte, uint8_t Nbits, uint8_t ini);
+uint8_t OW_add_read_seq(uint8_t Nbytes);
 void read_from_OWbuf(uint8_t start_idx, uint8_t N, uint8_t *outbuf);
 void ow_reset();
 uint8_t OW_get_reset_status();

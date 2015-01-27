@@ -115,7 +115,7 @@ void AD7794_init(){
 	if(i != ADC_NO_ERROR){
 		if(i == ADC_ERR_NO_DEVICE){
 		//	print_int(curSPI, lastsendfun);
-			MSG(": ADC signal is absent! Check connection.\r\n");
+			MSG("ADC signal is absent! Check connection.\n");
 		/*	if(curSPI == 1){
 				curSPI = 2;
 				switch_SPI(SPI2);
@@ -127,10 +127,10 @@ void AD7794_init(){
 	}else{
 		if(!setup_AD7794(INTREFIN | REF_DETECTION | UNIPOLAR_CODING, IEXC_DIRECT  | IEXC_1MA)
 			|| !AD7794_calibration(0)){
-			MSG("Error: can't initialize AD7794!\r\n");
+			MSG("Error: can't initialize AD7794!\n");
 		}else{
 			ad7794_on = 1;
-			DBG("ADC ready\r\n");
+			DBG("ADC ready\n");
 		}
 	}
 }
@@ -140,15 +140,14 @@ int main(){
 	uint32_t Old_timer = 0, lastTRDread = 0, lastTmon = 0;
 	//SPI_read_status SPI_stat;
 
-	//rcc_clock_setup_in_hsi_out_48mhz();
 	// RCC clocking: 8MHz oscillator -> 72MHz system
 	rcc_clock_setup_in_hse_8mhz_out_72mhz();
+	usb_disconnect(); // turn off USB while initializing all
+
 	// GPIO
 	GPIO_init();
 
 	steppers_init();
-
-	usb_disconnect(); // turn off USB
 
 	// init USART1
 	UART_init(USART1);
@@ -156,12 +155,8 @@ int main(){
 	// USB
 	usbd_dev = USB_init();
 
-	// init ADC
-	ADC_init();
-
 	// SysTick is a system timer with 1mc period
 	SysTick_init();
-
 
 //	switch_SPI(SPI2); // init SPI2
 //	SPI_init();
@@ -171,11 +166,13 @@ int main(){
 	init_ow_dmatimer();
 
 	// wait a little and then turn on USB pullup
-	for (i = 0; i < 0x800000; i++)
-		__asm__("nop");
-	usb_connect(); // turn on USB
+//	for (i = 0; i < 0x800000; i++)
+//		__asm__("nop");
 
+	// init ADC
+	ADC_init();
 	ADC_calibrate_and_start();
+	usb_connect(); // turn on USB
 	while(1){
 		usbd_poll(usbd_dev);
 		if(usbdatalen){ // there's something in USB buffer
@@ -192,7 +189,9 @@ int main(){
 		OW_process(); // process 1-wire commands
 		if(OW_DATA_READY()){
 			OW_CLEAR_READY_FLAG();
-			MSG("Ready!\n");
+#ifdef EBUG
+			OW_printID(0, lastsendfun);
+#endif
 		}
 		process_stepper_motors(); // check flags of motors' timers
 		if(Timer - Old_timer > 999){ // one-second cycle
@@ -248,5 +247,3 @@ void print_time(sendfun s){
 	s(' ');
 	print_int(Timer, s);
 }
-
-// D = dlmread('file')

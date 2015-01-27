@@ -42,7 +42,7 @@ uint32_t __strex(uint32_t val, volatile uint32_t *addr);
 typedef uint32_t mutex_t;
 
 #define MUTEX_UNLOCKED 0
-#define MUTEX_LOCKED	 1
+#define MUTEX_LOCKED   1
 
 void mutex_lock(mutex_t *m);
 void mutex_unlock(mutex_t *m);

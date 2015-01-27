@@ -37,6 +37,8 @@
 
 #define MSG(arg) prnt((uint8_t*)arg, lastsendfun)
 
+#define ERR(arg) do{prnt((uint8_t*)"Error! ",lastsendfun); prnt((uint8_t*)arg, lastsendfun);}while(0)
+
 typedef void (*sendfun)(uint8_t); // function to send a byte
 typedef void (*intfun)(int32_t, sendfun); // function to process entered integer value at end of input
 

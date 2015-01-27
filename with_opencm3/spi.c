@@ -66,15 +66,15 @@ uint8_t write_SPI(uint8_t *data, uint8_t len){
 	//DBG("Write SPI.."); //return 1;
 	uint8_t i;
 	uint32_t tend = Timer + 10; // we will wait for end of previous transmission not more than 10ms
-	//DBG("check\r\n");
+	//DBG("check\n");
 	while(!SPI_EOT_FLAG && Timer < tend); // wait for previous DMA interrupt
 	if(!SPI_EOT_FLAG){
-		DBG("SPI error: no EOT flag!\r\n");
+		DBG("SPI error: no EOT flag!\n");
 		return 0; // error: there's no receiver???
 	}
 	if(len > SPI_BUFFERSIZE) len = SPI_BUFFERSIZE;
 	SPI_EOT_FLAG = 0;
-	//DBG("OK\r\n");
+	//DBG("OK\n");
 	//read_end = Timer + 100; // we will wait for end of previous transmission not more than 0.1s
 	for(i = 0; i < len; i++)
 		SPI_TxBuffer[i] = data[i];
@@ -102,13 +102,13 @@ uint8_t *read_SPI(uint8_t *data, uint8_t len){
 	//DBG("read SPI.. "); //return NULL;
 	uint8_t i;
 	uint32_t tend = Timer + 100; // we will wait for end of previous transmission not more than 0.1s
-	//DBG("check\r\n");
+	//DBG("check\n");
 	while((!SPI_EOT_FLAG || len != SPI_RxIndex) && Timer < tend);
 	if(len != SPI_RxIndex){
-		//DBG("SPI error: bad data length\r\n");
+		//DBG("SPI error: bad data length\n");
 		return NULL;
 	}
-	//DBG("OK\r\n");
+	//DBG("OK\n");
 	for(i = 0; i < len; i++){
 		data[i] = SPI_RxBuffer[i];
 		//print_int(SPI_RxBuffer[i], usb_send);

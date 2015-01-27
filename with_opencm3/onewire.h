@@ -42,10 +42,12 @@ typedef struct{
 extern uint8_t ow_data_ready;
 #define OW_DATA_READY()       (ow_data_ready)
 #define OW_CLEAR_READY_FLAG() do{ow_data_ready = 0;}while(0)
+
 void OW_process();
 void OW_fill_ID(uint8_t N);
-
 uint8_t OW_Send(uint8_t sendReset, uint8_t *command, uint8_t cLen);
+void OW_printID(uint8_t N, sendfun s);
+
 
 
 #if 0

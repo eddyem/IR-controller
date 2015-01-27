@@ -4,12 +4,12 @@ Functional map of MCU pins
 001     PE2     DIR_3           direction of steppers' rotation
 002     PE3     DIR_4
 003     PE4     DIR_5
-004     PE6     DG_FEEDBACK     feedback from power switch POW_LOAD (+10..12V)
-005     -
-006     -
-007     -
-008     -
-009     -
+004     PE5     POW3            Turn ON/OFF power switch POW_LOAD
+005     PE6     DG_FEEDBACK     feedback from power switch POW_LOAD (+10..12V)
+006     VBAT    -
+007     PC13    -
+008     PC14    -
+009     PC15    -
 010     VSS     GND
 011     VDD     +3.3V
 012     OSC_IN  8MHz in
@@ -18,7 +18,7 @@ Functional map of MCU pins
 015     PC0     SHTR            Shutter on pulse
 016     PC1     SHTR_FB         Error signal from shutter H-bridge
 017     PC2     POW0            Shutter polarity (open/close)
-018     -
+018     PC3     -
 019     VSSA    0v analog
 020     VREF-   ref (0v)
 021     VREF+   ref (+3.3v)
@@ -45,23 +45,23 @@ Functional map of MCU pins
 042     PE11    EN5 /
 043     PE12    POW2\
 044     PE13    POW1/           Power load (10..12V, pull-down)
-045     -
-046     -
-047     PB10    USART3_TX       RS-232 (master) 
+045     PE14    -
+046     PE15    -
+047     PB10    USART3_TX       RS-232 (master)
 048     PB11    USART3_RX
 049     VSS     GND
 050     VDD     +3.3V
-051     -
+051     PB12    -
 052     SPI2_SCK     \
 053     SPI2_MISO     |         External SPI connection (at edge of the board)
 054     SPI2_MOSI    /
-055     -
-056     -
+055     PD8     -
+056     PD9     -
 057     PD10    EXT0\
 058     PD11    EXT1 |          ADG506 address selection
 059     PD12    EXT2 |              or custom external ports
 060     PD13    EXT3/
-061     -
+061     PD14    -
 062     PD15    TIM2            timer for motors 4&5
 063     PC6     TIM1            timer for stepper motors 1..3
 064     PC7     \ LS1           Linear stage 1 (long) DOWN end-switch
@@ -72,15 +72,15 @@ Functional map of MCU pins
 069     PA10    BOOT_RX /
 070     PA11    USB_DM          USB data-
 071     PA12    USB_DP          USB data+
-072     -
-073     -
+072     PA13    -
+073     NC      -
 074     VSS     GND
 075     VDD     +3.3V
-076     -
-077     -
+076     PA14    -
+077     PA15    -
 078     PC10    USB_POWER       +3V when USB connected
-079     PC11    USB_DISC        software USB disconnection (low lewel for bipolar VT1, high level for p-channel MOSFET)
-080     -
+079     PC11    USB_DISC        software USB disconnection (low lewel for n-channel VT1, high level for pnp bipolar or p-channel MOSFET)
+080     PC12    -
 081     PD0     \
 082     PD1     | Tur1          Slits turret Hall sensors
 083     PD2     |
@@ -99,5 +99,5 @@ Functional map of MCU pins
 096     I2C_SDA/CANTX    /
 097     PE0     DIR_1           direction of SM 1,2
 098     PE1     DIR_2
-099     VSS
-100     VDD
+099     VSS     GND
+100     VDD     +3.3V

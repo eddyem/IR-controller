@@ -149,22 +149,30 @@ uint8_t adc_channel_array[16] = {9,8,15,14,7,6,5,4};
  */
 void adc_dma_on(){
 	// first configure DMA1 Channel1 (ADC1)
-	rcc_periph_clock_enable(RCC_DMA1); // RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
-	dma_channel_reset(DMA1, DMA_CHANNEL1); //DMA_DeInit(DMA1_Channel1);
-	dma_set_peripheral_address(DMA1, DMA_CHANNEL1, (uint32_t) &(ADC_DR(ADC1))); // DMA_InitStructure.DMA_PeripheralBaseAddr = ADC1_DR_Address;
-	dma_set_memory_address(DMA1, DMA_CHANNEL1, (uint32_t) ADC_value); // DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)&ADC_value;
-	dma_set_number_of_data(DMA1, DMA_CHANNEL1, ADC_CHANNELS_NUMBER); // DMA_InitStructure.DMA_BufferSize = 1;
-	dma_set_read_from_peripheral(DMA1, DMA_CHANNEL1); // DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
-	dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL1); // DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Disable;
-	dma_disable_peripheral_increment_mode(DMA1, DMA_CHANNEL1); // DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-	dma_set_peripheral_size(DMA1, DMA_CHANNEL1, DMA_CCR_PSIZE_16BIT); // DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
-	dma_set_memory_size(DMA1, DMA_CHANNEL1, DMA_CCR_MSIZE_16BIT); // DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
-	dma_enable_circular_mode(DMA1, DMA_CHANNEL1); // DMA_InitStructure.DMA_Mode = DMA_Mode_Circular; DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
-	dma_set_priority(DMA1, DMA_CHANNEL1, DMA_CCR_PL_HIGH); // DMA_InitStructure.DMA_Priority = DMA_Priority_High;
 	nvic_disable_irq(NVIC_DMA1_CHANNEL1_IRQ);
+	dma_channel_reset(DMA1, DMA_CHANNEL1);
+	DMA1_CPAR1 = (uint32_t) &(ADC_DR(ADC1));
+	DMA1_CMAR1 = (uint32_t) ADC_value;
+	DMA1_CNDTR1 = ADC_CHANNELS_NUMBER;
+	DMA1_CCR1 = DMA_CCR_MINC | DMA_CCR_PSIZE_16BIT | DMA_CCR_MSIZE_16BIT
+			| DMA_CCR_CIRC | DMA_CCR_PL_HIGH | DMA_CCR_EN;
+	adc_enable_dma(ADC1);
+	adc_power_on(ADC1);
+	/*
+	dma_set_peripheral_address(DMA1, DMA_CHANNEL1, (uint32_t) &(ADC_DR(ADC1)));
+	dma_set_memory_address(DMA1, DMA_CHANNEL1, (uint32_t) ADC_value);
+	dma_set_number_of_data(DMA1, DMA_CHANNEL1, ADC_CHANNELS_NUMBER);
+	dma_set_read_from_peripheral(DMA1, DMA_CHANNEL1);
+	dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL1);
+	dma_disable_peripheral_increment_mode(DMA1, DMA_CHANNEL1);
+	dma_set_peripheral_size(DMA1, DMA_CHANNEL1, DMA_CCR_PSIZE_16BIT);
+	dma_set_memory_size(DMA1, DMA_CHANNEL1, DMA_CCR_MSIZE_16BIT);
+	dma_enable_circular_mode(DMA1, DMA_CHANNEL1);
+	dma_set_priority(DMA1, DMA_CHANNEL1, DMA_CCR_PL_HIGH);
 	dma_disable_transfer_error_interrupt(DMA1, DMA_CHANNEL1);
 	dma_disable_transfer_complete_interrupt(DMA1, DMA_CHANNEL1);
-	dma_enable_channel(DMA1, DMA_CHANNEL1); // DMA_Cmd(DMA1_Channel1, ENABLE);
+	dma_enable_channel(DMA1, DMA_CHANNEL1);
+	*/
 }
 
 void ADC_init(){
@@ -181,8 +189,7 @@ void ADC_init(){
 
 	// Make sure the ADC doesn't run during config
 	adc_off(ADC1);
-
-	adc_dma_on();
+	rcc_periph_clock_enable(RCC_DMA1);
 
 	// Configure ADC as continuous scan mode with DMA
 	adc_set_dual_mode(ADC_CR1_DUALMOD_IND); // ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;
@@ -192,8 +199,8 @@ void ADC_init(){
 	adc_set_right_aligned(ADC1); // ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
 	adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_239DOT5CYC); // ADC_SampleTime_239Cycles5
 	//adc_set_sample_time(ADC1, ADC_CHANNEL8, ADC_SMPR_SMP_239DOT5CYC); // ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 1, ADC_SampleTime_239Cycles5);
-	adc_enable_dma(ADC1); // ADC_DMACmd(ADC1, ENABLE);
-	adc_power_on(ADC1); // ADC_Cmd(ADC1, ENABLE);
+
+	adc_dma_on();
 }
 
 /**
@@ -208,16 +215,22 @@ void ADC_calibrate_and_start(){
 	adc_start_conversion_direct(ADC1);
 }
 
+
+
+
+
+
 uint16_t tim2_buff[TIM2_DMABUFF_SIZE];
 uint16_t tim2_inbuff[TIM2_DMABUFF_SIZE];
 int tum2buff_ctr = 0;
+uint8_t ow_done = 1;
 /**
  * this function sends bits of ow_byte (LSB first) to 1-wire line
  * @param ow_byte - byte to convert
  * @param Nbits   - number of bits to send
  * @param ini     - 1 to zero counter
  */
-uint8_t OW_add_byte(uint8_t ow_byte, uint8_t Nbits, uint8_t ini){
+uint8_t OW_add_byte(_U_ uint8_t ow_byte, _U_ uint8_t Nbits, _U_ uint8_t ini){
 	uint8_t i, byte;
 	if(ini) tum2buff_ctr = 0;
 	if(Nbits == 0) return 0;
@@ -232,6 +245,26 @@ uint8_t OW_add_byte(uint8_t ow_byte, uint8_t Nbits, uint8_t ini){
 		if(tum2buff_ctr == TIM2_DMABUFF_SIZE) return 0; // avoid buffer overflow
 		ow_byte = ow_byte >> 1;
 	}
+//	print_int(tum2buff_ctr, lastsendfun);
+//	MSG(" bytes in send buffer\n");
+	return 1;
+}
+
+/**
+ * Adds Nbytes bytes 0xff  for reading sequence
+ */
+uint8_t OW_add_read_seq(uint8_t Nbytes){
+	uint8_t i;
+	if(Nbytes == 0) return 0;
+	Nbytes *= 8; // 8 bits for each byte
+	for(i = 0; i < Nbytes; i++){
+		tim2_buff[tum2buff_ctr++] = 1;
+		if(tum2buff_ctr == TIM2_DMABUFF_SIZE) return 0;
+	}
+#ifdef EBUG
+	print_int(tum2buff_ctr, lastsendfun);
+	MSG(" bytes in send buffer\n");
+#endif
 	return 1;
 }
 
@@ -241,47 +274,79 @@ uint8_t OW_add_byte(uint8_t ow_byte, uint8_t Nbits, uint8_t ini){
  * @param N         - data length (in **bytes**)
  * @outbuf          - where to place data
  */
-void read_from_OWbuf(uint8_t start_idx, uint8_t N, uint8_t *outbuf){
+void read_from_OWbuf(_U_ uint8_t start_idx, _U_ uint8_t N, _U_ uint8_t *outbuf){
 	uint8_t i, j, last = start_idx + N * 8, byte;
 	if(last >= TIM2_DMABUFF_SIZE) last = TIM2_DMABUFF_SIZE;
 	for(i = start_idx; i < last;){
 		byte = 0;
-		for(j = 0; j < 8; j++, byte <<= 1){
-			if(tim2_inbuff[i++] > OW_READ1) byte |= 1;
+		for(j = 0; j < 8; j++){
+			byte >>= 1;
+#ifdef EBUG
+			print_int(tim2_inbuff[i], lastsendfun);
+			MSG(" ");
+#endif
+			if(tim2_inbuff[i++] < OW_READ1)
+				byte |= 0x80;
 		}
 		*outbuf++ = byte;
+#ifdef EBUG
+		MSG("readed \n");
+#endif
 	}
 }
-
+// there's a mistake in opencm3, so redefine this if needed (TIM_CCMR2_CC3S_IN_TI1 -> TIM_CCMR2_CC3S_IN_TI4)
+#ifndef TIM_CCMR2_CC3S_IN_TI4
+#define TIM_CCMR2_CC3S_IN_TI4		(2)
+#endif
 void init_ow_dmatimer(){ // tim2_ch4 - PA3, no remap
 	gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
 			GPIO_CNF_OUTPUT_ALTFN_OPENDRAIN, GPIO3);
 	rcc_periph_clock_enable(RCC_TIM2);
+	rcc_periph_clock_enable(RCC_DMA1);
 	timer_reset(TIM2);
 	// timers have frequency of 1MHz -- 1us for one step
 	// 36MHz of APB1
 	timer_set_mode(TIM2, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
 	// 72MHz div 72 = 1MHz
-	timer_set_prescaler(TIM2, 71); // prescaler is (div - 1)
-	timer_continuous_mode(TIM2); // automatically reload
-	timer_disable_preload(TIM2); // force changing period
-	timer_set_period(TIM2, OW_BIT); // bit length
-	timer_enable_update_event(TIM2);
-	timer_set_oc_polarity_high(TIM2, TIM_OC4);
-	timer_set_oc_mode(TIM2, TIM_OC4, TIM_OCM_PWM1); // edge-aligned mode
-	timer_disable_oc_preload(TIM2, TIM_OC4);
-	timer_set_oc_value(TIM2, TIM_OC4, OW_RESET);
-	timer_enable_oc_output(TIM2, TIM_OC4);
-
-	timer_disable_counter(TIM2);
-	timer_disable_irq(TIM2, TIM_DIER_UIE);
-	nvic_disable_irq(NVIC_TIM2_IRQ);
-	gpio_set(GPIOA, GPIO3);
+	TIM2_PSC = 71;  // prescaler is (div - 1)
+	TIM2_CR1 &= ~(TIM_CR1_OPM | TIM_CR1_UDIS); // continuous mode & enable update events
+	TIM2_CR1 |= TIM_CR1_ARPE; // changing period immediately
+	TIM2_ARR = OW_BIT; // default period of timer
+	// PWM_OUT: TIM2_CH4; capture: TIM2_CH3
+	// PWM edge-aligned mode & enable preload for CCR4, CC3 takes input from TI4
+	TIM2_CCMR2 = TIM_CCMR2_OC4M_PWM1 | TIM_CCMR2_OC4PE | TIM_CCMR2_CC3S_IN_TI4;
+	TIM2_CCR4 = 0; // set output value to 1 by clearing CCR4
+	TIM2_EGR = TIM_EGR_UG; // update values of ARR & CCR4
+	// set low polarity for CC4, high for CC4 & enable CC4 out and CC3 in
+	TIM2_CCER = TIM_CCER_CC4P | TIM_CCER_CC4E | TIM_CCER_CC3E;
 
 	// TIM2_CH4 - DMA1, channel 7
-	rcc_periph_clock_enable(RCC_DMA1);
 	dma_channel_reset(DMA1, DMA_CHANNEL7);
-	dma_set_peripheral_address(DMA1, DMA_CHANNEL7, (uint32_t) &(TIM_CCR4(TIM2)));
+	DMA1_CCR7 = DMA_CCR_DIR | DMA_CCR_MINC | DMA_CCR_PSIZE_16BIT | DMA_CCR_MSIZE_16BIT
+			| DMA_CCR_TEIE | DMA_CCR_TCIE | DMA_CCR_PL_HIGH;
+	/*
+	DMA1_CCR7 |= DMA_CCR_DIR; // dma_set_read_from_memory(DMA1, DMA_CHANNEL7);
+	DMA1_CCR7 |= DMA_CCR_MINC; // dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL7);
+	//dma_disable_peripheral_increment_mode(DMA1, DMA_CHANNEL7);
+	DMA1_CCR7 |= DMA_CCR_PSIZE_16BIT; // dma_set_peripheral_size(DMA1, DMA_CHANNEL7, DMA_CCR_PSIZE_16BIT);
+	DMA1_CCR7 |= DMA_CCR_MSIZE_16BIT; // dma_set_memory_size(DMA1, DMA_CHANNEL7, DMA_CCR_MSIZE_16BIT);
+	DMA1_CCR7 |= DMA_CCR_TEIE; // dma_enable_transfer_error_interrupt(DMA1, DMA_CHANNEL7);
+	DMA1_CCR7 |= DMA_CCR_TCIE; // dma_enable_transfer_complete_interrupt(DMA1, DMA_CHANNEL7);
+	*/
+	nvic_enable_irq(NVIC_DMA1_CHANNEL7_IRQ); // enable dma1_channel7_isr
+}
+
+void run_dmatimer(){
+	ow_done = 0;
+	adc_disable_dma(ADC1); // turn off DMA & ADC
+	adc_off(ADC1);
+	DMA1_IFCR = DMA_ISR_TEIF7|DMA_ISR_HTIF7|DMA_ISR_TCIF7|DMA_ISR_GIF7 |
+		DMA_ISR_TEIF1|DMA_ISR_HTIF1|DMA_ISR_TCIF1|DMA_ISR_GIF1; // clear flags
+
+	//init_ow_dmatimer();
+/*
+	// TIM2_CH4 - DMA1, channel 7
+	dma_channel_reset(DMA1, DMA_CHANNEL7);
 	dma_set_read_from_memory(DMA1, DMA_CHANNEL7);
 	dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL7);
 	dma_disable_peripheral_increment_mode(DMA1, DMA_CHANNEL7);
@@ -289,146 +354,116 @@ void init_ow_dmatimer(){ // tim2_ch4 - PA3, no remap
 	dma_set_memory_size(DMA1, DMA_CHANNEL7, DMA_CCR_MSIZE_16BIT);
 	dma_enable_transfer_error_interrupt(DMA1, DMA_CHANNEL7);
 	dma_enable_transfer_complete_interrupt(DMA1, DMA_CHANNEL7);
-	dma_set_memory_address(DMA1, DMA_CHANNEL7, (uint32_t)tim2_buff);
-
-	nvic_enable_irq(NVIC_DMA1_CHANNEL7_IRQ); // enable dma1_channel7_isr
-
-	// capture: TIM2_CH3
-	timer_ic_set_input(TIM2, TIM_IC3, TIM_IC_IN_TI4);
-	timer_set_oc_polarity_high(TIM2, TIM_OC3);
-	timer_ic_enable(TIM2, TIM_IC3);
-	//timer_enable_oc_output(TIM2, TIM_OC3);
-	//gpio_set(GPIOA, GPIO3);
-	ow_reset();
-}
-
-/**
- * reconfigure DMA1_1 for 1-wire
- */
-void ow_dma_on(){
+	*/
+	DMA1_CCR7 &= ~DMA_CCR_EN; // disable (what if it's enabled?) to set address
+	DMA1_CPAR7 = (uint32_t) &(TIM_CCR4(TIM2)); // dma_set_peripheral_address(DMA1, DMA_CHANNEL7, (uint32_t) &(TIM_CCR4(TIM2)));
+	DMA1_CMAR7 = (uint32_t) tim2_buff; // dma_set_memory_address(DMA1, DMA_CHANNEL7, (uint32_t)tim2_buff);
+	DMA1_CNDTR7 = tum2buff_ctr;//dma_set_number_of_data(DMA1, DMA_CHANNEL7, tum2buff_ctr);
+	// TIM2_CH4 - DMA1, channel 7
 	dma_channel_reset(DMA1, DMA_CHANNEL1);
-	dma_set_peripheral_address(DMA1, DMA_CHANNEL1, (uint32_t) &(TIM_CCR3(TIM2)));
-	dma_set_memory_address(DMA1, DMA_CHANNEL1, (uint32_t) tim2_inbuff);
+	DMA1_CCR1 = DMA_CCR_MINC | DMA_CCR_PSIZE_16BIT | DMA_CCR_MSIZE_16BIT
+			| DMA_CCR_TEIE | DMA_CCR_TCIE | DMA_CCR_PL_HIGH;
+	/*
 	dma_set_read_from_peripheral(DMA1, DMA_CHANNEL1);
 	dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL1);
 	dma_disable_peripheral_increment_mode(DMA1, DMA_CHANNEL1);
 	dma_set_peripheral_size(DMA1, DMA_CHANNEL1, DMA_CCR_PSIZE_16BIT);
 	dma_set_memory_size(DMA1, DMA_CHANNEL1, DMA_CCR_MSIZE_16BIT);
-	nvic_enable_irq(NVIC_DMA1_CHANNEL1_IRQ);
 	dma_enable_transfer_error_interrupt(DMA1, DMA_CHANNEL1);
 	dma_enable_transfer_complete_interrupt(DMA1, DMA_CHANNEL1);
-}
+	*/
+	DMA1_CPAR1 = (uint32_t) &(TIM_CCR3(TIM2)); //dma_set_peripheral_address(DMA1, DMA_CHANNEL1, (uint32_t) &(TIM_CCR3(TIM2)));
+	DMA1_CMAR1 = (uint32_t) tim2_inbuff; //dma_set_memory_address(DMA1, DMA_CHANNEL1, (uint32_t) tim2_inbuff);
+	DMA1_CNDTR1 = tum2buff_ctr; //dma_set_number_of_data(DMA1, DMA_CHANNEL1, tum2buff_ctr);
+	nvic_enable_irq(NVIC_DMA1_CHANNEL1_IRQ);
 
-void run_dmatimer(){
-	//int i;
-	ow_done = 0;
-	ow_dma_on();
-	DMA1_IFCR = DMA_ISR_TEIF7|DMA_ISR_HTIF7|DMA_ISR_TCIF7|DMA_ISR_GIF7 |
-		DMA_ISR_TEIF1|DMA_ISR_HTIF1|DMA_ISR_TCIF1|DMA_ISR_GIF1; // clear flags
-	TIM_SR(TIM2) = 0;
-	timer_set_period(TIM2, OW_BIT); // bit length
-	dma_set_number_of_data(DMA1, DMA_CHANNEL7, tum2buff_ctr);
-	//timer_set_dma_on_compare_event(TIM2);
-	timer_set_dma_on_update_event(TIM2);
-	timer_ic_enable(TIM2, TIM_IC3);
-	dma_enable_channel(DMA1, DMA_CHANNEL7);
+	DMA1_CCR7 |= DMA_CCR_EN; //dma_enable_channel(DMA1, DMA_CHANNEL7);
+	DMA1_CCR1 |= DMA_CCR_EN; //dma_enable_channel(DMA1, DMA_CHANNEL1);
 
-	//for(i = 0; i < TIM2_DMABUFF_SIZE; i++) tim2_inbuff[i] = 0;
-	dma_set_number_of_data(DMA1, DMA_CHANNEL1, tum2buff_ctr);
-	dma_enable_channel(DMA1, DMA_CHANNEL1);
+	TIM2_SR = 0; // clear all flags
+	TIM2_CR1 &= ~TIM_CR1_OPM; // continuous mode
+	TIM2_ARR = OW_BIT; // bit length
+	TIM2_EGR = TIM_EGR_UG; // update value of ARR
 
-	timer_enable_irq(TIM2, TIM_DIER_UDE | TIM_DIER_CC4DE | TIM_DIER_CC3DE);
-	TIM2_CCER |= TIM_CCER_CC4P | TIM_CCER_CC4E;
-	TIM2_CR1 |= TIM_CR1_CEN; // timer_enable_counter(TIM2);
-}
+	TIM2_CR2 &= ~TIM_CR2_CCDS; // timer_set_dma_on_compare_event(TIM2);
+	TIM2_CCER |= TIM_CCER_CC3E; // enable input capture
+	TIM2_DIER = TIM_DIER_CC4DE | TIM_DIER_CC3DE; // enable DMA events
+	// set low polarity, enable cc out & enable input capture
+	TIM2_CCER |= TIM_CCER_CC4P | TIM_CCER_CC4E | TIM_CCER_CC3E;
+	TIM2_CR1 |= TIM_CR1_CEN; // run timer
 
-void ow_reset(){
-	ow_done = 0;
-	timer_disable_counter(TIM2);
-	DMA1_IFCR = DMA_ISR_TEIF7|DMA_ISR_HTIF7|DMA_ISR_TCIF7|DMA_ISR_GIF7 |
-		DMA_ISR_TEIF1|DMA_ISR_HTIF1|DMA_ISR_TCIF1|DMA_ISR_GIF1; // clear flags
-	TIM_SR(TIM2) = 0;
-	timer_set_period(TIM2, OW_RESET*2); // reset length
-	timer_set_oc_value(TIM2, TIM_OC4, OW_RESET);
-
-	timer_ic_set_input(TIM2, TIM_IC3, TIM_IC_IN_TI4);
-	timer_set_oc_polarity_high(TIM2, TIM_OC3);
-	timer_ic_enable(TIM2, TIM_IC3);
-
-//	timer_enable_irq(TIM2, TIM_DIER_CC3DE);
-	timer_set_dma_on_update_event(TIM2); // wait until end of signal!
-	timer_enable_irq(TIM2, TIM_DIER_UIE | TIM_DIER_CC3IE);
-	nvic_enable_irq(NVIC_TIM2_IRQ);
-
-	//timer_generate_event(TIM2, TIM_SR_UIF);
-/*
-	tim2_inbuff[0] = 0;
-	dma_set_number_of_data(DMA1, DMA_CHANNEL1, 6);
-	dma_enable_channel(DMA1, DMA_CHANNEL1); // enable only reading - for interrupt
-*/
-	// NOT USE THIS: wery long
-	//timer_set_oc_polarity_low(TIM2, TIM_OC4);
-	//timer_enable_oc_output(TIM2, TIM_OC4);
-	TIM2_CCER |= TIM_CCER_CC4P | TIM_CCER_CC4E;
-	TIM2_CR1 |= TIM_CR1_CEN; // timer_enable_counter(TIM2);
 }
 
 uint16_t rstat = 0, lastcc3;
+void ow_reset(){
+	ow_done = 0;
+	rstat = 0;
+	TIM2_SR = 0; // clear all flags
+	TIM2_DIER = 0; // disable timer interrupts
+	TIM2_ARR = OW_RESET_TIME; // set period to 1ms
+	TIM2_CCR4 = OW_RESET; // zero pulse length
+	TIM2_EGR = TIM_EGR_UG; // update values of ARR & CCR4
+	TIM2_CR1 |= TIM_CR1_OPM | TIM_CR1_CEN; // we need only single pulse & run timer
+	TIM2_SR = 0; // clear update flag generated after timer's running
+	TIM2_DIER = TIM_DIER_UIE | TIM_DIER_CC3IE; // generate interrupts on update event & cc
+	nvic_enable_irq(NVIC_TIM2_IRQ);
+}
+
 void tim2_isr(){
-	if(timer_get_flag(TIM2, TIM_SR_UIF)){
-		timer_clear_flag(TIM2, TIM_SR_UIF);
-		TIM2_CCER &= ~TIM_CCER_CC4P; //timer_set_oc_polarity_high(TIM2, TIM_OC4);
+	if(TIM2_SR & TIM_SR_UIF){ // update interrupt
+		TIM2_SR &= ~TIM_SR_UIF; // clear flag
+		TIM2_DIER = 0; // disable all timer interrupts
+		TIM2_CCR4 = 0; // set output value to 1
+		TIM2_EGR |= TIM_EGR_UG; // generate update event to change value in CCR4
 		TIM2_CR1 &= ~TIM_CR1_CEN;    // timer_disable_counter(TIM2);
-		gpio_set(GPIOA, GPIO3);
-		timer_disable_irq(TIM2, TIM_DIER_UIE | TIM_DIER_CC3IE);
 		nvic_disable_irq(NVIC_TIM2_IRQ);
 		ow_done = 1;
 		rstat = lastcc3;
-		print_int(rstat, lastsendfun);
-		MSG("\n");
+/*		print_int(rstat, lastsendfun);
+		MSG("\n");*/
 	}
-	if(timer_get_flag(TIM2, TIM_SR_CC3IF)){
-		timer_clear_flag(TIM2, TIM_SR_CC3IF);
-		lastcc3 = TIM_CCR3(TIM2);
+	if(TIM2_SR & TIM_SR_CC3IF){ // we need this interrupt to store CCR3 value
+		TIM2_SR = 0; // clear flag (we've manage TIM_SR_UIF before, so can simply do =0)
+		lastcc3 = TIM2_CCR3;
+		//TIM2_DIER &= ~TIM_DIER_CC3IE; // disable CCR3 interrupts
 	}
 }
 
 
 void dma1_channel7_isr(){
-	if(DMA1_ISR & DMA_ISR_TCIF7) {
-		DMA1_IFCR = DMA_IFCR_CTCIF7;
-		dma_disable_channel(DMA1, DMA_CHANNEL7);
-		timer_disable_irq(TIM2, TIM_DIER_CC4DE);
+	if(DMA1_ISR & DMA_ISR_TCIF7){
+		DMA1_IFCR = DMA_IFCR_CTCIF7; // clear flag
+		DMA1_CCR7 &= ~DMA_CCR_EN; // disable DMA1 channel 7
+		//TIM2_DIER &= ~TIM_DIER_CC4DE;
 	}else if(DMA1_ISR & DMA_ISR_TEIF7){
 		DMA1_IFCR = DMA_IFCR_CTEIF7;
-		MSG("out transfer error\n");
+		MSG("DMA out transfer error\n");
 	}
 }
 
-uint8_t ow_done = 1;
 void dma1_channel1_isr(){
-	int i;
+	//int i;
 	if(DMA1_ISR & DMA_ISR_TCIF1) {
 		DMA1_IFCR = DMA_IFCR_CTCIF1;
-		TIM2_CCER &= ~TIM_CCER_CC4P; //timer_set_oc_polarity_high(TIM2, TIM_OC4);
 		TIM2_CR1 &= ~TIM_CR1_CEN;    // timer_disable_counter(TIM2);
-		timer_disable_irq(TIM2, TIM_DIER_CC3DE);
-		gpio_set(GPIOA, GPIO3);
-		dma_disable_channel(DMA1, DMA_CHANNEL1);
+		//TIM2_DIER &= ~TIM_DIER_CC3DE;
+		DMA1_CCR1 &= ~DMA_CCR_EN; // disable DMA1 channel 1
 		nvic_disable_irq(NVIC_DMA1_CHANNEL1_IRQ);
 		ow_done = 1;
-		for(i = 0; i < tum2buff_ctr; i++){
+/*		for(i = 0; i < tum2buff_ctr; i++){
 			print_int(tim2_inbuff[i], lastsendfun);
 			MSG(" ");
 		}
-		MSG("\n");
+		MSG("\n");*/
 	}else if(DMA1_ISR & DMA_ISR_TEIF1){
 		DMA1_IFCR = DMA_IFCR_CTEIF1;
-		MSG("in transfer error\n");
+		MSG("DMA in transfer error\n");
 	}
 }
 
 uint8_t OW_get_reset_status(){
+/*	print_int(rstat, lastsendfun);
+	MSG("\n");*/
 	if(rstat < OW_PRESENT) return 0; // no devices
 	return 1;
 }
