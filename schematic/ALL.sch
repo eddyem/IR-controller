@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Вс 30 ноя 2014 15:36:58
+EESchema Schematic File Version 2  date Ср 28 янв 2015 08:47:22
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -41,7 +41,7 @@ $Descr A3 16535 11693
 encoding utf-8
 Sheet 1 12
 Title "IR-spectrometer Control System"
-Date "30 nov 2014"
+Date "28 jan 2015"
 Rev ""
 Comp "SAO RAS"
 Comment1 ""
@@ -1818,6 +1818,4 @@ F 3 "" H 5700 2550 60  0000 C CNN
 $EndComp
 Wire Wire Line
 	5700 2550 5700 2450
-Entry Wire Line
-	8950 2200 9050 2300
 $EndSCHEMATC

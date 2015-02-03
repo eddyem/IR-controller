@@ -42,7 +42,7 @@
 #include "AD7794.h"
 #include "onewire.h"
 #include "stepper_motors.h"
-#include "sensors.h"
+#include "powerhw.h"
 
 #define _U_    __attribute__((__unused__))
 #define  U8(x)  ((uint8_t)  x)

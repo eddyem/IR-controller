@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Вс 30 ноя 2014 15:36:58
+EESchema Schematic File Version 2  date Ср 28 янв 2015 08:47:22
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -41,7 +41,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 8 12
 Title "Stepper motor module"
-Date "30 nov 2014"
+Date "28 jan 2015"
 Rev ""
 Comp "SAO RAS"
 Comment1 ""

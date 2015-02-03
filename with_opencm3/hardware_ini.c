@@ -29,7 +29,23 @@
 #include "hardware_ini.h"
 #include "onewire.h"
 
-volatile uint16_t ADC_value[8]; // ADC DMA value
+#define ADC_CHANNELS_NUMBER    10
+/*
+ * Due to inconvenient pins position on STM32F103VxT6 I had to make this strange location:
+ * my channel #   ->   ADC1/2 channel #
+ * 0 -> 9    PB1
+ * 1 -> 8    PB0
+ * 2 -> 15   PC5
+ * 3 -> 14   PC4
+ * 4 -> 7    PA7
+ * 5 -> 6    PA6
+ * 6 -> 5    PA5
+ * 7 -> 4    PA4
+ * U36 -> 1  PA1
+ * U10 -> 0  PA0
+ */
+uint8_t adc_channel_array[16] = {9,8,15,14,7,6,5,4,1,0};
+volatile uint16_t ADC_value[ADC_CHANNELS_NUMBER]; // ADC DMA value
 
 /*
  * Configure SPI ports
@@ -129,21 +145,6 @@ void SysTick_init(){
 	systick_counter_enable();
 }
 
-/*
- * Due to inconvenient pins position on STM32F103VxT6 I had to make this strange location:
- * my channel #   ->   ADC1/2 channel #
- * 0 -> 9    PB1
- * 1 -> 8    PB0
- * 2 -> 15   PC5
- * 3 -> 14   PC4
- * 4 -> 7    PA7
- * 5 -> 6    PA6
- * 6 -> 5    PA5
- * 7 -> 4    PA4
- */
-uint8_t adc_channel_array[16] = {9,8,15,14,7,6,5,4};
-#define ADC_CHANNELS_NUMBER    8
-
 /**
  * Turn on ADC DMA for filling temperatures buffer
  */
@@ -180,11 +181,11 @@ void ADC_init(){
 	rcc_periph_clock_enable(RCC_ADC1);
 	rcc_set_adcpre(RCC_CFGR_ADCPRE_PCLK2_DIV4);
 	rcc_periph_clock_enable(RCC_GPIOA | RCC_GPIOB | RCC_GPIOC); // clocking for ADC ports
-	// channels 4-7: PA7-PA4
-	gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO4|GPIO5|GPIO6|GPIO7);
-	// channels 0,1: PB1, PB0
+	// channels 4-7: PA7-PA4 (ADC IN 4..7); U10 (PA0); U36 (PA1)
+	gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO4|GPIO5|GPIO6|GPIO7|GPIO1|GPIO0);
+	// channels 0,1: PB1, PB0 (ADC IN 8, 9)
 	gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO0|GPIO1);
-	// channels 2,3: PC5, PC4
+	// channels 2,3: PC5, PC4 (ADC IN14, 15)
 	gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO4|GPIO5);
 
 	// Make sure the ADC doesn't run during config
@@ -215,9 +216,42 @@ void ADC_calibrate_and_start(){
 	adc_start_conversion_direct(ADC1);
 }
 
+/**
+ * get shutter voltage in value of U*100
+ * 3.3V == 4096 ADU, 36V comes to ADC in through resistor divider 4.7k:56k, so
+ * U36(V/100) = Uadc(ADU) * 607/47 * 33/40960 * 100 = Uadc(ADU) * 20031 / 19251
+ * ==> approximately this is equal to val*26/25 or val + val/25
+ */
+int shutter_voltage(){
+	int val = SHUTTER_SENSE_VALUE;
+	val += val/25;
+	return val;
+}
 
+/**
+ * get power voltage in value of U*100
+ * 3.3V == 4096 ADU, 10..12V comes to ADC in through resistor divider 4.7k:12k, so
+ * U10(V/100) = Uadc(ADU) * 167/47 * 33/40960 * 100 = Uadc(ADU) * 5511 / 19251
+ * ==> approximately this is equal to val*2/7
+ */
+int power_voltage(){
+	int val = POWER_SENSE_VALUE * 2;
+	val /= 7;
+	return val;
+}
 
-
+/**
+ * Resistance of TRD
+ * @param num - number of sensor
+ * @return R*100
+ * we measure
+ */
+int TRD_value(uint8_t num){
+	uint32_t v = ADC_value[num];
+	uint32_t r = 100000 * v;
+	r /= (uint32_t)(4096 - v);
+	return (int) r;
+}
 
 
 uint16_t tim2_buff[TIM2_DMABUFF_SIZE];

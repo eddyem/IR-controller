@@ -23,6 +23,16 @@
 #ifndef __HARDWARE_INI_H__
 #define __HARDWARE_INI_H__
 
+/*
+ * Timers:
+ * SysTick - system time
+ * TIM1 - not used
+ * TIM2 - 1-wire
+ * TIM3, TIM4 - stepper motors
+ * TIM5 - pause for shutter
+ */
+
+
 #define TIM2_DMABUFF_SIZE 128
 // 1-wire zero-state lengths (in us minus 1)
 #define OW_1           (9)
@@ -95,6 +105,31 @@ void ADC_calibrate_and_start();
 #define OW_USART_X			USART2
 #define OW_RX_PORT			GPIO_BANK_USART2_RX
 #define OW_RX_PIN			GPIO_USART2_RX
+
+/*
+ * Shutter defines
+ */
+// We use timer 5 to process pauses with shutter
+#define Shutter_tim_isr   tim5_isr
+#define SHUTTER_TIM       TIM5
+#define NVIC_SHUTTER_IRQ  NVIC_TIM5_IRQ
+// Shutter pins: PC0 & PC2 are polarity & on/off pins; PC1 is feedback pin
+#define SHUTTER_PORT           (GPIOC)
+#define SHUTTER_ON_PIN         (GPIO2)
+#define SHUTTER_POLARITY_PIN   (GPIO0)
+#define SHUTTER_FB_PIN         (GPIO1)
+// voltage (*100) threshold to run shutter
+#define SHUTTER_VOLTAGE_THRES  (1000)
+#define SHUTTER_UNDERVOLTAGE_THRES  (500)
+// delay in operations in us
+#define SHUTTER_DELAY  (10000)
+
+// ADC_value[8] is U36, ADC_value[9] is U10
+#define SHUTTER_SENSE_VALUE  (ADC_value[8])
+#define POWER_SENSE_VALUE    (ADC_value[9])
+int shutter_voltage();
+int power_voltage();
+int TRD_value(uint8_t num);
 
 void init_ow_dmatimer();
 void run_dmatimer();

@@ -59,6 +59,8 @@ void print_ad_vals(sendfun s){
 			s(' ');
 		}
 		newline(s);
+	}else{
+		P("no AD7794 found\n", s);
 	}
 }
 
@@ -117,12 +119,12 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 			case 'D': // double conversion
 				doubleconv = 1;
 			break;
-			case 'A': // show ADC value
+			case 'A': // show TRD values
 				//adc_start_conversion_direct(ADC1);
-				P("\n ADC value: ", s);
+				P("\nTRD resistance: ", s);
 				for(j = 0; j < 8; j++){
-					print_int(ADC_value[j], s);
-					P("\t", s);
+					print_int(TRD_value(i), s);
+					s('\t');
 				}
 				newline(s);
 			break;
@@ -168,6 +170,30 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 		/*	case 'U': // test: init USART1
 				UART_init(USART1);
 			break; */
+			case 'p': // show motors voltage * 100
+				print_int(power_voltage(), s);
+				newline(s);
+			break;
+			case 'h': // show sHutter voltage * 100
+				print_int(shutter_voltage(), s);
+				newline(s);
+			break;
+			case 'r': // reinit shutter
+				shutter_init();
+			break;
+			case 't': // print shutter state
+				print_shutter_state(s);
+			break;
+			case 'c': // close shutter
+				if(Shutter_State != SHUTTER_CLOSED)
+					Shutter_State = SHUTTER_CLOSING;
+				else P("alerady closed\n", s);
+			break;
+			case 'o': // open shutter
+				if(Shutter_State != SHUTTER_OPENED)
+					Shutter_State = SHUTTER_OPENING;
+				else P("alerady opened\n", s);
+			break;
 			case '\n': // show newline as is
 			break;
 			case '\r':

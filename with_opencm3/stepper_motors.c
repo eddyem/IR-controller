@@ -66,7 +66,7 @@ static void setup_timer(uint8_t N){
 	// 72MHz div 36 = 2MHz
 	timer_set_prescaler(Tim, 35); // prescaler is (div - 1)
 	timer_continuous_mode(Tim); // automatically reload
-	timer_enable_preload(Tim); // force changing period
+	timer_disable_preload(Tim); // force changing period
 	timer_set_period(Tim, Motor_period[N] - 1);
 	timer_enable_update_event(Tim);
 	timer_enable_irq(Tim, TIM_DIER_UIE); // update IRQ enable

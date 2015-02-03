@@ -172,7 +172,9 @@ int main(){
 	// init ADC
 	ADC_init();
 	ADC_calibrate_and_start();
+
 	usb_connect(); // turn on USB
+	shutter_init();
 	while(1){
 		usbd_poll(usbd_dev);
 		if(usbdatalen){ // there's something in USB buffer
@@ -194,6 +196,8 @@ int main(){
 #endif
 		}
 		process_stepper_motors(); // check flags of motors' timers
+		process_shutter(); // shutter state machine
+
 		if(Timer - Old_timer > 999){ // one-second cycle
 			Old_timer += 1000;
 //OW_fill_ID(0);
@@ -213,7 +217,7 @@ int main(){
 				print_time(lastsendfun);
 				lastsendfun(' ');
 				for(i = 0; i < 8; i++){
-					print_int(ADC_value[i], lastsendfun);
+					print_int(TRD_value(i), lastsendfun);
 					lastsendfun(' ');
 				}
 				print_ad_vals(lastsendfun);
