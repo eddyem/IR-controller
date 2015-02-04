@@ -64,6 +64,13 @@ void print_ad_vals(sendfun s){
 	}
 }
 
+void set_shtr_delay(int32_t v, sendfun s){
+	uint16_t d = (uint16_t) v;
+	Shutter_delay = d;
+	P("Change delay to ", s);
+	print_int(d, s);
+}
+
 void parce_incoming_buf(char *buf, int len, sendfun s){
 	uint8_t command;
 	int i = 0, j, m;
@@ -185,14 +192,14 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 				print_shutter_state(s);
 			break;
 			case 'c': // close shutter
-				if(Shutter_State != SHUTTER_CLOSED)
-					Shutter_State = SHUTTER_CLOSING;
-				else P("alerady closed\n", s);
+				try_to_close_shutter();
 			break;
 			case 'o': // open shutter
-				if(Shutter_State != SHUTTER_OPENED)
-					Shutter_State = SHUTTER_OPENING;
-				else P("alerady opened\n", s);
+				try_to_open_shutter();
+			break;
+			case 'z': // temporary: change delay
+				I = set_shtr_delay;
+				READINT();
 			break;
 			case '\n': // show newline as is
 			break;

@@ -200,6 +200,8 @@ int main(){
 
 		if(Timer - Old_timer > 999){ // one-second cycle
 			Old_timer += 1000;
+			if(Shutter_State == SHUTTER_NOTREADY)
+				shutter_init();
 //OW_fill_ID(0);
 			//gpio_toggle(GPIOC, GPIO12); // toggle LED
 			//gpio_toggle(GPIO_BANK_SPI2_MOSI, GPIO_SPI2_MOSI);

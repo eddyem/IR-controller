@@ -1,4 +1,4 @@
-Cmp-Mod V01 Created by CvPcb (2013-feb-26)-stable date = Вс 30 ноя 2014 15:38:41
+Cmp-Mod V01 Created by CvPcb (2013-feb-26)-stable date = Ср 04 фев 2015 15:00:52
 
 BeginCmp
 TimeStamp = /53A910B8/50AF1E60;
@@ -115,14 +115,14 @@ EndCmp
 BeginCmp
 TimeStamp = /53973803/53997111;
 Reference = C5;
-ValeurCmp = 10u;
+ValeurCmp = 100u;
 IdModule  = CP_5x11mm;
 EndCmp
 
 BeginCmp
 TimeStamp = /53973803/53997130;
 Reference = C6;
-ValeurCmp = 100u;
+ValeurCmp = 470u;
 IdModule  = CP_5x11mm;
 EndCmp
 
@@ -215,6 +215,13 @@ TimeStamp = /547DB437;
 Reference = C19;
 ValeurCmp = 1u;
 IdModule  = SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /54D32A5B;
+Reference = C20;
+ValeurCmp = 2200u, 40V;
+IdModule  = CP_16x25mm;
 EndCmp
 
 BeginCmp

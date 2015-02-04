@@ -27,8 +27,9 @@
 
 // Shutter finite-state machine states
 typedef enum{
-	SHUTTER_NOTREADY = 0, // initialisation - not ready, or error in work
-	SHUTTER_READY,
+	SHUTTER_NOTREADY = 0, // not ready, or error in work
+	SHUTTER_INITIALIZED,  // initialisation in process
+	SHUTTER_READY,        // ready for operation
 	SHUTTER_OPENED,       // shutter is in opened state
 	SHUTTER_CLOSED,       // shutter is in closed state
 	SHUTTER_OPENING,      // user is waiting for opening
@@ -38,9 +39,15 @@ typedef enum{
 } shutter_state;
 
 extern shutter_state Shutter_State;
+extern uint16_t Shutter_delay;
 
 shutter_state shutter_init();
 void process_shutter();
 void print_shutter_state(sendfun s);
+
+void shutter_try(shutter_state state);
+
+#define try_to_close_shutter()   shutter_try(SHUTTER_CLOSING)
+#define try_to_open_shutter()    shutter_try(SHUTTER_OPENING)
 
 #endif // __POWERHW_H__

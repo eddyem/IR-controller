@@ -118,11 +118,14 @@ void ADC_calibrate_and_start();
 #define SHUTTER_ON_PIN         (GPIO2)
 #define SHUTTER_POLARITY_PIN   (GPIO0)
 #define SHUTTER_FB_PIN         (GPIO1)
-// voltage (*100) threshold to run shutter
-#define SHUTTER_VOLTAGE_THRES  (1000)
-#define SHUTTER_UNDERVOLTAGE_THRES  (500)
-// delay in operations in us
-#define SHUTTER_DELAY  (10000)
+// voltage (*100) threshold to run shutter - 20V
+#define SHUTTER_VOLTAGE_THRES  (2000)
+// minimum voltage that should be on capasitor if power source is on
+#define SHUTTER_UNDERVOLTAGE_THRES  (700)
+// delay in operations (open/close) in us (according to shutter's datasheet it's about 12ms)
+#define SHUTTER_DELAY  (12500)
+// delay for error test
+#define SHUTTER_OP_DELAY (200)
 
 // ADC_value[8] is U36, ADC_value[9] is U10
 #define SHUTTER_SENSE_VALUE  (ADC_value[8])

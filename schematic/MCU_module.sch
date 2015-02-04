@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Ср 28 янв 2015 08:47:22
+EESchema Schematic File Version 2  date Ср 04 фев 2015 15:06:53
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -41,7 +41,7 @@ $Descr A3 16535 11693
 encoding utf-8
 Sheet 3 12
 Title "MCU module on STM32F103"
-Date "28 jan 2015"
+Date "4 feb 2015"
 Rev ""
 Comp "SAO RAS"
 Comment1 ""
@@ -296,7 +296,7 @@ L C C5
 U 1 1 53997111
 P 4400 1100
 F 0 "C5" H 4400 1200 40  0000 L CNN
-F 1 "10u" H 4406 1015 40  0000 L CNN
+F 1 "100u" H 4406 1015 40  0000 L CNN
 F 2 "C2" H 4438 950 30  0001 C CNN
 F 3 "~" H 4400 1100 60  0000 C CNN
 	1    4400 1100
@@ -307,7 +307,7 @@ L C C6
 U 1 1 53997130
 P 5350 1100
 F 0 "C6" H 5350 1200 40  0000 L CNN
-F 1 "100u" H 5356 1015 40  0000 L CNN
+F 1 "470u" H 5356 1015 40  0000 L CNN
 F 2 "C2" H 5388 950 30  0001 C CNN
 F 3 "~" H 5350 1100 60  0000 C CNN
 	1    5350 1100
