@@ -31,7 +31,7 @@ usbd_device *usbd_dev;
 
 uint8_t ADC_monitoring = 0; // ==1 to make continuous monitoring
 
-uint32_t ad7794_on = 0;
+uint32_t ad7794_on = 0, flash_status = 1;
 uint32_t ad7794_values[TRD_NO];
 uint8_t doubleconv = 1; // ==0 to single conversion; 1 to double (with currents reversing)
 #define ADC_direct()  setup_AD7794(EXTREFIN_1 | REF_DETECTION | UNIPOLAR_CODING, IEXC_DIRECT  | IEXC_1MA)
@@ -175,6 +175,7 @@ int main(){
 
 	usb_connect(); // turn on USB
 	shutter_init();
+	flash_status = check_flash_data(); // init flash block if uninitialized
 	while(1){
 		usbd_poll(usbd_dev);
 		if(usbdatalen){ // there's something in USB buffer
@@ -200,8 +201,7 @@ int main(){
 
 		if(Timer - Old_timer > 999){ // one-second cycle
 			Old_timer += 1000;
-			if(Shutter_State == SHUTTER_NOTREADY)
-				shutter_init();
+			// if(Shutter_State == SHUTTER_NOTREADY) shutter_init();
 //OW_fill_ID(0);
 			//gpio_toggle(GPIOC, GPIO12); // toggle LED
 			//gpio_toggle(GPIO_BANK_SPI2_MOSI, GPIO_SPI2_MOSI);

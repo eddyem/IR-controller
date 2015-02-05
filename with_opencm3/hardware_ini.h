@@ -128,8 +128,8 @@ void ADC_calibrate_and_start();
 #define SHUTTER_OP_DELAY (200)
 
 // ADC_value[8] is U36, ADC_value[9] is U10
-#define SHUTTER_SENSE_VALUE  (ADC_value[8])
-#define POWER_SENSE_VALUE    (ADC_value[9])
+#define SHUTTER_SENSE_NUMBER  (8)
+#define POWER_SENSE_NUMBER    (9)
 int shutter_voltage();
 int power_voltage();
 int TRD_value(uint8_t num);

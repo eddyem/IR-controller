@@ -28,8 +28,8 @@
 #include "main.h"
 #include "hardware_ini.h"
 #include "onewire.h"
+#include "flash.h"
 
-#define ADC_CHANNELS_NUMBER    10
 /*
  * Due to inconvenient pins position on STM32F103VxT6 I had to make this strange location:
  * my channel #   ->   ADC1/2 channel #
@@ -223,9 +223,10 @@ void ADC_calibrate_and_start(){
  * ==> approximately this is equal to val*26/25 or val + val/25
  */
 int shutter_voltage(){
-	int val = SHUTTER_SENSE_VALUE;
-	val += val/25;
-	return val;
+	uint32_t val = ADC_value[SHUTTER_SENSE_NUMBER]; // 8
+	val *= ADC_multipliers[SHUTTER_SENSE_NUMBER];
+	val /= ADC_divisors[SHUTTER_SENSE_NUMBER];
+	return (int)val;
 }
 
 /**
@@ -235,9 +236,10 @@ int shutter_voltage(){
  * ==> approximately this is equal to val*2/7
  */
 int power_voltage(){
-	int val = POWER_SENSE_VALUE * 2;
-	val /= 7;
-	return val;
+	uint32_t val = ADC_value[POWER_SENSE_NUMBER]; // 9
+	val *= ADC_multipliers[POWER_SENSE_NUMBER];
+	val /= ADC_divisors[POWER_SENSE_NUMBER];
+	return (int)val;
 }
 
 /**
@@ -248,8 +250,8 @@ int power_voltage(){
  */
 int TRD_value(uint8_t num){
 	uint32_t v = ADC_value[num];
-	uint32_t r = 100000 * v;
-	r /= (uint32_t)(4096 - v);
+	uint32_t r = v * ADC_multipliers[num];
+	r /= (uint32_t)(4096 - v) * ADC_divisors[num];
 	return (int) r;
 }
 

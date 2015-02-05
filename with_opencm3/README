@@ -1,7 +1,7 @@
 The work begins
 First PCB have been prodused, so I need "only" to solder elements & finish the code
 
-Pinout of MCI is in file schematics/STM32_PINS
+Pinout of MCU is in file schematics/STM32_PINS
 
 
 -- OLD --

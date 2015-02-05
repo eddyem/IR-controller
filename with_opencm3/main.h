@@ -37,7 +37,10 @@
 #include <libopencm3/stm32/dma.h>
 #include <libopencm3/stm32/spi.h>
 
+#define ADC_CHANNELS_NUMBER    (10)
+
 #include "sync.h" // mutexes
+#include "flash.h"
 #include "user_proto.h"
 #include "AD7794.h"
 #include "onewire.h"
@@ -52,6 +55,7 @@
 extern uint32_t ad7794_values[]; // array with ADC data
 extern uint8_t doubleconv; // single/double ADC conversion
 extern uint32_t ad7794_on; // ==1 after AD7794 initialisation
+extern uint32_t flash_status; // == 0 if flash OK, or == FLASH_SR/FLASH_SR2
 extern uint8_t ADC_monitoring; // ==1 to make continuous monitoring
 void AD7794_init();
 

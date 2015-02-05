@@ -197,9 +197,19 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 			case 'o': // open shutter
 				try_to_open_shutter();
 			break;
-			case 'z': // temporary: change delay
-				I = set_shtr_delay;
-				READINT();
+			case 'F': // dump flash data
+				dump_flash_data(s);
+			break;
+			case 'd': // change ADC_divisor
+				;
+			break;
+			case 'm': // change ADC_multiplier
+				;
+			break;
+			case 'z': // temporary: refresh
+				flash_status = check_flash_data();
+				print_int(flash_status, s);
+				s('\n');
 			break;
 			case '\n': // show newline as is
 			break;
