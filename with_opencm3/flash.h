@@ -29,18 +29,20 @@
 #define FLASH_MAGICK ((uint32_t) 0xAA55A55A)
 
 typedef struct{
-	uint32_t magick; // magick value
+	//uint32_t magick; // magick value
 	// A-D value[x] = ADU * ADC_multipliers[x] / ADC_divisors[x]
 	uint32_t _ADC_multipliers[ADC_CHANNELS_NUMBER];
 	uint32_t _ADC_divisors[ADC_CHANNELS_NUMBER];
+	char last_addr[0];
+	char struct_end[0] __attribute__ ((aligned(2048)));
 } flash_data;
 
-extern flash_data *Stored_Data;
+extern const flash_data Stored_Data;
 
-#define ADC_multipliers  Stored_Data->_ADC_multipliers
-#define ADC_divisors     Stored_Data->_ADC_divisors
+#define ADC_multipliers  Stored_Data._ADC_multipliers
+#define ADC_divisors     Stored_Data._ADC_divisors
 
-uint32_t check_flash_data();
 void dump_flash_data(sendfun s);
+uint32_t  flash_store_U32(uint32_t addr, uint32_t *data);
 
 #endif // __FLASH_H__

@@ -3,6 +3,8 @@ First PCB have been prodused, so I need "only" to solder elements & finish the c
 
 Pinout of MCU is in file schematics/STM32_PINS
 
+USE FUNCTION rat() in GNU/octave to calculate rational approximation to ADC conversion coefficients
+
 
 -- OLD --
 

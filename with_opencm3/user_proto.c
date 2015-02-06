@@ -23,6 +23,7 @@
 #include "main.h"
 #include "uart.h"
 #include "hardware_ini.h"
+#include "flash.h"
 
 // integer value given by user
 static volatile int32_t User_value = 0;
@@ -71,20 +72,53 @@ void set_shtr_delay(int32_t v, sendfun s){
 	print_int(d, s);
 }
 
+
+int adc_channel = -1;
+int div_mul = 0; // 0 - multip., !0 - div.
+void ch_divmul(int32_t v, sendfun s){
+	uint32_t val = (uint32_t) v;
+	if(adc_channel == -1) return;
+	if(div_mul){ // != 0 - divisors
+		flash_store_U32((uint32_t)&ADC_divisors[adc_channel], &val);
+	}else{ // == 0 - mul
+		flash_store_U32((uint32_t)&ADC_multipliers[adc_channel], &val);
+	}
+	adc_channel = -1;
+	P("stored\n", s);
+}
+/**
+ * Change divisor
+ * @param v - user value (sensor number)
+ * @param s - active sendfunction
+ */
+void try_ch_divmul(int32_t v, sendfun s){
+	if(v > ADC_CHANNELS_NUMBER || v < 0){
+		P("wrong channel number\n", s);
+		adc_channel = -1;
+		return; // error
+	}
+	adc_channel = v;
+	I = ch_divmul;
+	read_int(NULL, 0); //start reading next int
+}
+
 void parce_incoming_buf(char *buf, int len, sendfun s){
 	uint8_t command;
+	//uint32_t utmp;
 	int i = 0, j, m;
 	lastsendfun = s;
 	if(Uval_ready == UVAL_START){ // we are in process of user's value reading
 		i += read_int(buf, len);
 	}
 	if(Uval_ready == UVAL_ENTERED){
+		P("confirm entered value (+/-): ", s);
 		print_int(User_value, s); // printout readed integer value for error control
 		Uval_ready = UVAL_PRINTED;
 	}
 	if(I && Uval_ready == UVAL_CHECKED){
 		Uval_ready = UVAL_BAD; // clear Uval_ready
 		I(User_value, s);
+		return;
 	}
 	for(; i < len; i++){
 		command = buf[i];
@@ -201,15 +235,14 @@ void parce_incoming_buf(char *buf, int len, sendfun s){
 				dump_flash_data(s);
 			break;
 			case 'd': // change ADC_divisor
-				;
+				div_mul = 1; //divisors
+				I = try_ch_divmul;
+				READINT();
 			break;
 			case 'm': // change ADC_multiplier
-				;
-			break;
-			case 'z': // temporary: refresh
-				flash_status = check_flash_data();
-				print_int(flash_status, s);
-				s('\n');
+				div_mul = 0; // multipliers
+				I = try_ch_divmul;
+				READINT();
 			break;
 			case '\n': // show newline as is
 			break;

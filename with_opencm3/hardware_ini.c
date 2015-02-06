@@ -234,6 +234,7 @@ int shutter_voltage(){
  * 3.3V == 4096 ADU, 10..12V comes to ADC in through resistor divider 4.7k:12k, so
  * U10(V/100) = Uadc(ADU) * 167/47 * 33/40960 * 100 = Uadc(ADU) * 5511 / 19251
  * ==> approximately this is equal to val*2/7
+ * (real: approx 17/58)
  */
 int power_voltage(){
 	uint32_t val = ADC_value[POWER_SENSE_NUMBER]; // 9
