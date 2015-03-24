@@ -115,7 +115,7 @@ void AD7794_init(){
 	if(i != ADC_NO_ERROR){
 		if(i == ADC_ERR_NO_DEVICE){
 		//	print_int(curSPI, lastsendfun);
-			MSG("ADC signal is absent! Check connection.\n");
+			MSG("ADC signal is absent! Check connection.\n", "[ " STR_EXTADC_INIT " ERR ]\n");
 		/*	if(curSPI == 1){
 				curSPI = 2;
 				switch_SPI(SPI2);
@@ -127,7 +127,7 @@ void AD7794_init(){
 	}else{
 		if(!setup_AD7794(INTREFIN | REF_DETECTION | UNIPOLAR_CODING, IEXC_DIRECT  | IEXC_1MA)
 			|| !AD7794_calibration(0)){
-			MSG("Error: can't initialize AD7794!\n");
+			MSG("Error: can't initialize AD7794!\n", "[ " STR_EXTADC_INIT " ERR ]\n");
 		}else{
 			ad7794_on = 1;
 			DBG("ADC ready\n");
@@ -136,8 +136,9 @@ void AD7794_init(){
 }
 
 int main(){
-	int i;
+	//int i;
 	uint32_t Old_timer = 0, lastTRDread = 0, lastTmon = 0;
+	int oldusbdatalen = 0;
 	//SPI_read_status SPI_stat;
 
 	// RCC clocking: 8MHz oscillator -> 72MHz system
@@ -158,10 +159,9 @@ int main(){
 	// SysTick is a system timer with 1mc period
 	SysTick_init();
 
-//	switch_SPI(SPI2); // init SPI2
-//	SPI_init();
-
-	switch_SPI(SPI1); // init SPI1
+	// instead of SPI1 we use those pins to control shutter and system state
+	// SPI2 used for working with external ADC
+	switch_SPI(SPI2); // init SPI2
 	SPI_init();
 	init_ow_dmatimer();
 
@@ -175,11 +175,13 @@ int main(){
 
 	usb_connect(); // turn on USB
 	shutter_init();
+
+	LED_STATUS_OK(); // All initialized - light up LED
 	while(1){
 		usbd_poll(usbd_dev);
-		if(usbdatalen){ // there's something in USB buffer
-			parce_incoming_buf(usbdatabuf, usbdatalen, usb_send);
-			usbdatalen = 0; // all data have been processed - prepare to get new portion
+		if(oldusbdatalen != usbdatalen){ // there's something in USB buffer
+			usbdatalen = parce_incoming_buf(usbdatabuf, usbdatalen, usb_send);
+			oldusbdatalen = usbdatalen;
 		}
 		check_and_parce_UART(USART1); // also check data in UART buffers
 		if(ad7794_on){
@@ -216,11 +218,7 @@ int main(){
 			lastTmon += 10000;
 			if(ADC_monitoring){
 				print_time(lastsendfun);
-				lastsendfun(' ');
-				for(i = 0; i < 8; i++){
-					print_int(TRD_value(i), lastsendfun);
-					lastsendfun(' ');
-				}
+				print_int_ad_vals(lastsendfun);
 				print_ad_vals(lastsendfun);
 			}
 		}
@@ -248,7 +246,10 @@ void Delay(uint16_t _U_ time){
  * with ' ' as delimeter
  */
 void print_time(sendfun s){
+	if(mode == LINE_MODE) P("[ " STR_PRINT_TIME " ", s);
 	print_int(tOVRFL, s);
 	s(' ');
 	print_int(Timer, s);
+	if(mode == LINE_MODE) P(" ]\n", s);
+	else if(mode == BYTE_MODE) s(' ');
 }

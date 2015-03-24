@@ -52,9 +52,9 @@ Functional map of MCU pins
 049     VSS     GND
 050     VDD     +3.3V
 051     PB12    -
-052     SPI2_SCK     \
-053     SPI2_MISO     |         External SPI connection (at edge of the board)
-054     SPI2_MOSI    /
+052     PB13    SPI2_SCK     \
+053     PB14    SPI2_MISO    |    SPI connection (near USB connector)
+054     PB15    SPI2_MOSI    /
 055     PD8     -
 056     PD9     -
 057     PD10    EXT0\
@@ -89,14 +89,14 @@ Functional map of MCU pins
 086     PD5     | Tur2          Middle filters turret Hall sensors
 087     PD6     /
 088     PD7     Tur3_0          Upper filters turret Hall 0
-089     SPI1_SCK           \
-090     SPI1_MISO          |    SPI connection (near USB connector)
-091     SPI1_MOSI/I2C_SMBAI/
+089     PB3/SPI1_SCK    Shtr_cam (signal from camera electronics, 0 to open, high prio)  \
+090     PB4/SPI1_MISO   Shtr_man (signal from manual switch, 0 to open, low priority)    |  External signals connector (near USB)
+091     PB5/SPI1_MOSI   Shtf_fb  (shutter feedback, ==0 when opened)                     /
 092     PB6     Tur3_1   \      Upper filters turret Hall 1,2
 093     PB7     Tur3_2   /
 094     BOOT    BOOT            Button to boot from bootloader
-095     I2C_SCL/CANRX    \      External CAN connection (or I2S, etc)
-096     I2C_SDA/CANTX    /
+095     PB8/CanRx  LED_status  \   LED indicators: status lights when all OK
+096     PB9/CanTx  LED_shutter /   shutter LED lights when shutter opened
 097     PE0     DIR_1           direction of SM 1,2
 098     PE1     DIR_2
 099     VSS     GND

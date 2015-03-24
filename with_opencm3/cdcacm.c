@@ -45,7 +45,7 @@ static const struct usb_device_descriptor dev = {
 	.bNumConfigurations = 1,
 };
 
-char usbdatabuf[64]; // buffer for received data
+char usbdatabuf[USB_RX_DATA_SIZE]; // buffer for received data
 int usbdatalen = 0;  // lenght of received data
 
 /*
@@ -199,9 +199,11 @@ static int cdcacm_control_request(usbd_device *usbd_dev, struct usb_setup_data *
 	switch (req->bRequest) {
 	case SET_CONTROL_LINE_STATE:{
 #ifdef EBUG
-		P("SET_CONTROL_LINE_STATE\n", uart1_send);
-		print_int(req->wValue, uart1_send);
-		newline(uart1_send);
+		if(mode == BYTE_MODE){
+			P("SET_CONTROL_LINE_STATE\n", uart1_send);
+			print_int(req->wValue, uart1_send);
+			newline(uart1_send);
+		}
 #endif
 		if(req->wValue){ // terminal is opened
 			USB_connected = 1;
@@ -228,13 +230,15 @@ static int cdcacm_control_request(usbd_device *usbd_dev, struct usb_setup_data *
 	}break;
 	case SET_LINE_CODING:
 #ifdef EBUG
-		P("SET_LINE_CODING, len=", uart1_send);
+		if(mode == BYTE_MODE) P("SET_LINE_CODING, len=", uart1_send);
 #endif
 		if (!len || (*len != sizeof(struct usb_cdc_line_coding)))
 			return 0;
 #ifdef EBUG
-		print_int(*len, uart1_send);
-		newline(uart1_send);
+		if(mode == BYTE_MODE){
+			print_int(*len, uart1_send);
+			newline(uart1_send);
+		}
 #endif
 		memcpy((void *)&lc, (void *)*buf, *len);
 		// Mark & Space parity don't support by hardware, check it
@@ -250,12 +254,12 @@ static int cdcacm_control_request(usbd_device *usbd_dev, struct usb_setup_data *
 			memcpy((void *)*buf, (void *)&linecoding, sizeof(struct usb_cdc_line_coding));
 		//usbd_ep_write_packet(usbd_dev, 0x83, (char*)&linecoding, sizeof(linecoding));
 #ifdef EBUG
-		P("GET_LINE_CODING\n", uart1_send);
+		if(mode == BYTE_MODE) P("GET_LINE_CODING\n", uart1_send);
 #endif
 	break;
 	default:
 #ifdef EBUG
-		P("UNKNOWN\n", uart1_send);
+		if(mode == BYTE_MODE) P("UNKNOWN\n", uart1_send);
 #endif
 		return 0;
 	}
@@ -264,8 +268,11 @@ static int cdcacm_control_request(usbd_device *usbd_dev, struct usb_setup_data *
 
 static void cdcacm_data_rx_cb(usbd_device *usbd_dev, uint8_t ep){
 	(void)ep;
-	int len = usbd_ep_read_packet(usbd_dev, 0x01, usbdatabuf, USB_RX_DATA_SIZE - usbdatalen);
+	int len = usbd_ep_read_packet(usbd_dev, 0x01, usbdatabuf + usbdatalen, USB_RX_DATA_SIZE - usbdatalen);
 	usbdatalen += len;
+	if(usbdatalen >= USB_RX_DATA_SIZE){ // buffer overflow - drop all its contents
+		usbdatalen = 0;
+	}
 	//if(len > 0) parce_incoming_buf(buf, len, usb_send);
 }
 

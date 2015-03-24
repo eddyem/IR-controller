@@ -23,20 +23,6 @@
 #include <libopencm3/stm32/flash.h>
 #include <string.h>
 
-/*
- * this is a default values of stored data
- * they could be changed by appropriate command
- * align by 2k & make size 2k for using with high density devices
- */
-#define FLASH_BLOCK_SIZE   (2048)
-#define FLASH_WRONG_DATA_WRITTEN 0x80
-/*
- .bss._flash_buffer
-                0x20001000      0x800 mk/flash.o
-                0x20001000                _flash_buffer
-*/
-
-//const uint8_t _flash_buffer[FLASH_BLOCK_SIZE] __attribute__ ((aligned(FLASH_BLOCK_SIZE)));
 const flash_data Stored_Data __attribute__ ((aligned(FLASH_BLOCK_SIZE))) = {
 	//.magick = FLASH_MAGICK,
 	._ADC_multipliers = {100000,100000,100000,100000,100000,100000,100000,100000, // TRD
@@ -48,25 +34,6 @@ const flash_data Stored_Data __attribute__ ((aligned(FLASH_BLOCK_SIZE))) = {
 		7   // power
 	}
 };
-
-/**
- *  these are default values
- * they can be changed in runtime to change data stored in flash
- *
-flash_data Default_stored_data = {
-	.magick = FLASH_MAGICK,
-	._ADC_multipliers = {100000,100000,100000,100000,100000,100000,100000,100000, // TRD
-		26, // shutter
-		2   // power
-	},
-	._ADC_divisors = {1,1,1,1,1,1,1,1, // TRD
-		25, // shutter
-		7   // power
-	}
-};
-
-*/
-//flash_data *Stored_Data = (flash_data*) _flash_buffer;
 
 uint32_t flash_write_data(uint32_t *dataptr, uint16_t datalen){
 	uint32_t start_address = (uint32_t)&Stored_Data;

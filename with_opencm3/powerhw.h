@@ -45,7 +45,7 @@ shutter_state shutter_init();
 void process_shutter();
 void print_shutter_state(sendfun s);
 
-void shutter_try(shutter_state state);
+uint8_t shutter_try(shutter_state state);
 
 #define try_to_close_shutter()   shutter_try(SHUTTER_CLOSING)
 #define try_to_open_shutter()    shutter_try(SHUTTER_OPENING)

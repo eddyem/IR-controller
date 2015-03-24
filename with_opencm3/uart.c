@@ -268,6 +268,7 @@ UART_buff *get_uart_buffer(uint32_t UART){
  */
 void check_and_parce_UART(uint32_t UART){
 	sendfun sf;
+	static int oldlen = 0;
 	UART_buff *curbuff = get_uart_buffer(UART);
 	uint8_t datalen; // length of data in buffer - here we use param "end"
 	if(!curbuff) return;
@@ -286,8 +287,10 @@ void check_and_parce_UART(uint32_t UART){
 	}
 	datalen = curbuff->end;
 	if(!datalen) return; // buffer is empty
-	parce_incoming_buf((char*)curbuff->buf, datalen, sf); // process data
-	curbuff->end = 0; // and zero counter
+	if(oldlen != datalen){ // run checking buffer contents only when data size changed
+		// process data and zero counter if all OK
+		oldlen = curbuff->end = parce_incoming_buf((char*)curbuff->buf, datalen, sf);
+	}
 }
 
 /**

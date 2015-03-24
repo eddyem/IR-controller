@@ -54,16 +54,31 @@
 #define STAGE_CHECK(N, DIR)  CONCAT(EP ## N, DIR)
 
 // setup ports: PA8, PB6, PB7, PC7..PC9, PD0..PD7
+/*
 #define SETUP_ESW() do{gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO8); \
                        gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO6|GPIO7); \
                        gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, (uint16_t)0x0380);\
                        gpio_set_mode(GPIOD, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, (uint16_t)0xff); \
                     }while(0)
+*/
+#define SETUP_ESW() do{gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO8); \
+                       gpio_set(GPIOA, GPIO8); \
+                       gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO6|GPIO7); \
+                       gpio_set(GPIOB, GPIO6|GPIO7); \
+                       gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, (uint16_t)0x0380);\
+                       gpio_set(GPIOC, (uint16_t)0x0380);\
+                       gpio_set_mode(GPIOD, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, (uint16_t)0xff); \
+                       gpio_set(GPIOD, (uint16_t)0xff); \
+                    }while(0)
+
+extern uint8_t move2pos[]; // export this array for ability of moving turret to given position from outside
 
 void steppers_init();
 void process_stepper_motors();
-void move_motor(uint8_t num, int32_t steps);
+uint8_t move_motor(uint8_t num, int32_t steps);
 void stop_motor(uint8_t num);
 void set_motor_period(uint8_t num, uint16_t period);
+uint8_t check_ep(uint8_t num);
+
 
 #endif // __STEPPER_MOTORS_H__

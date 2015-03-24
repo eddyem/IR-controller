@@ -17,6 +17,7 @@
  * MA 02110-1301, USA.
  */
 #include "onewire.h"
+#include "user_proto.h"
 
 OW_ID id_array[OW_MAX_NUM]; // 1-wire devices ID buffer (not more than eight)
 uint8_t dev_amount = 0;   // amount of 1-wire devices
@@ -70,7 +71,7 @@ void OW_process(){
 			if(!OW_READY()) return; // reset in work
 			if(ow_was_reseting){
 				if(!OW_get_reset_status()){
-					MSG("error: no 1-wire devices found\n");
+					BYTE_MSG("error: no 1-wire devices found\n");
 					ow_was_reseting = 0;
 				//	OW_State = OW_OFF_STATE;
 				//	return;
@@ -100,7 +101,7 @@ void OW_process(){
 //uint8_t comtosend = 0;
 void OW_fill_ID(uint8_t N){
 	if(N >= OW_MAX_NUM){
-		MSG("number too big\n");
+		BYTE_MSG("number too big\n");
 		return;
 	}
 	//OW_Send(1, (uint8_t*)"\xcc\x33", 2);

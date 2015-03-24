@@ -117,9 +117,6 @@ void SPI2_init(){
  * GPIO initialisaion: clocking + pins setup
  */
 void GPIO_init(){
-/*	rcc_periph_clock_enable(RCC_AFIO);
-	rcc_periph_clock_enable(RCC_SPI1);
-	rcc_periph_clock_enable(RCC_GPIOC);*/
 	rcc_peripheral_enable_clock(&RCC_APB2ENR, RCC_APB2ENR_IOPAEN |
 			RCC_APB2ENR_IOPBEN | RCC_APB2ENR_IOPCEN | RCC_APB2ENR_IOPDEN |
 			RCC_APB2ENR_IOPEEN);
@@ -133,6 +130,18 @@ void GPIO_init(){
 	gpio_set_mode(ADC_ADDR_PORT, GPIO_MODE_OUTPUT_2_MHZ,
 				GPIO_CNF_OUTPUT_PUSHPULL, ADC_ADDR_MASK | ADC_EN_PIN); // ADDRESS: PD10..12; EN: PD13
 	gpio_clear(ADC_ADDR_PORT, ADC_ADDR_MASK | ADC_EN_PIN); // clear address & turn switch off
+	// LED status: opendrain
+	gpio_set_mode(LED_STATUS_PORT, GPIO_MODE_OUTPUT_2_MHZ,
+				GPIO_CNF_OUTPUT_OPENDRAIN, LED_STATUS_PIN);
+	LED_STATUS_BAD(); // turn LED off
+	// Shutter control: input pull up
+	gpio_set_mode(SHUTTER_EXT_PORT, GPIO_MODE_INPUT,
+				GPIO_CNF_INPUT_PULL_UPDOWN, SHUTTER_CAM_PIN | SHUTTER_MAN_PIN | SHUTTER_FBSW_PIN);
+	gpio_set(SHUTTER_EXT_PORT, SHUTTER_CAM_PIN | SHUTTER_MAN_PIN | SHUTTER_FBSW_PIN); // turn on pull up
+	// shutter status LED: opendrain
+	gpio_set_mode(LED_SHUTTER_PORT, GPIO_MODE_OUTPUT_2_MHZ,
+				GPIO_CNF_OUTPUT_OPENDRAIN, LED_SHUTTER_PIN);
+	LED_SHUTTER_CLOSE(); // turn it off
 }
 
 /*
@@ -299,8 +308,10 @@ uint8_t OW_add_read_seq(uint8_t Nbytes){
 		if(tum2buff_ctr == TIM2_DMABUFF_SIZE) return 0;
 	}
 #ifdef EBUG
-	print_int(tum2buff_ctr, lastsendfun);
-	MSG(" bytes in send buffer\n");
+	if(mode == BYTE_MODE){
+		print_int(tum2buff_ctr, lastsendfun);
+		P(" bytes in send buffer\n", lastsendfun);
+	}
 #endif
 	return 1;
 }
@@ -319,16 +330,16 @@ void read_from_OWbuf(_U_ uint8_t start_idx, _U_ uint8_t N, _U_ uint8_t *outbuf){
 		for(j = 0; j < 8; j++){
 			byte >>= 1;
 #ifdef EBUG
-			print_int(tim2_inbuff[i], lastsendfun);
-			MSG(" ");
+			if(mode == BYTE_MODE){
+				print_int(tim2_inbuff[i], lastsendfun);
+				lastsendfun(' ');
+			}
 #endif
 			if(tim2_inbuff[i++] < OW_READ1)
 				byte |= 0x80;
 		}
 		*outbuf++ = byte;
-#ifdef EBUG
-		MSG("readed \n");
-#endif
+		DBG("readed \n");
 	}
 }
 // there's a mistake in opencm3, so redefine this if needed (TIM_CCMR2_CC3S_IN_TI1 -> TIM_CCMR2_CC3S_IN_TI4)
@@ -345,6 +356,7 @@ void init_ow_dmatimer(){ // tim2_ch4 - PA3, no remap
 	// 36MHz of APB1
 	timer_set_mode(TIM2, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
 	// 72MHz div 72 = 1MHz
+	// TODO: WHY 71 if freq = 36MHz?
 	TIM2_PSC = 71;  // prescaler is (div - 1)
 	TIM2_CR1 &= ~(TIM_CR1_OPM | TIM_CR1_UDIS); // continuous mode & enable update events
 	TIM2_CR1 |= TIM_CR1_ARPE; // changing period immediately
@@ -474,7 +486,7 @@ void dma1_channel7_isr(){
 		//TIM2_DIER &= ~TIM_DIER_CC4DE;
 	}else if(DMA1_ISR & DMA_ISR_TEIF7){
 		DMA1_IFCR = DMA_IFCR_CTEIF7;
-		MSG("DMA out transfer error\n");
+		DBG("DMA out transfer error\n");
 	}
 }
 
@@ -494,7 +506,7 @@ void dma1_channel1_isr(){
 		MSG("\n");*/
 	}else if(DMA1_ISR & DMA_ISR_TEIF1){
 		DMA1_IFCR = DMA_IFCR_CTEIF1;
-		MSG("DMA in transfer error\n");
+		DBG("DMA in transfer error\n");
 	}
 }
 

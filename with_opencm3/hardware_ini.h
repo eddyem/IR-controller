@@ -23,13 +23,14 @@
 #ifndef __HARDWARE_INI_H__
 #define __HARDWARE_INI_H__
 
+
+// to have a compatibility with medium-density devices we can use only timers 1..4!!!
 /*
  * Timers:
  * SysTick - system time
  * TIM1 - not used
  * TIM2 - 1-wire
  * TIM3, TIM4 - stepper motors
- * TIM5 - pause for shutter
  */
 
 
@@ -109,10 +110,32 @@ void ADC_calibrate_and_start();
 /*
  * Shutter defines
  */
-// We use timer 5 to process pauses with shutter
-#define Shutter_tim_isr   tim5_isr
-#define SHUTTER_TIM       TIM5
-#define NVIC_SHUTTER_IRQ  NVIC_TIM5_IRQ
+// external signals for shutter opening: PB3 (SPI1_SCK) - from camera electronics, PB4 (SPI1_MISO) - from manual switch
+// both are pull-up inputs
+#define SHUTTER_EXT_PORT	(GPIOB)
+#define SHUTTER_CAM_PIN		(GPIO3)
+#define SHUTTER_MAN_PIN		(GPIO4)
+// shutter feedback ==0 when opened, PB5 (SPI1_MOSI)
+#define SHUTTER_FBSW_PIN	(GPIO5)
+// LED status open-drain output: PB8 (CAN RX)
+#define LED_STATUS_PORT		(GPIOB)
+#define LED_STATUS_PIN		(GPIO8)
+#define LED_STATUS_OK()		do{gpio_clear(LED_STATUS_PORT, LED_STATUS_PIN);}while(0)
+#define LED_STATUS_BAD()	do{gpio_set(LED_STATUS_PORT, LED_STATUS_PIN);}while(0)
+// Shutter LED (lights when shutter opened) open-drain output, PB9 (CAN TX)
+#define LED_SHUTTER_PORT	(GPIOB)
+#define LED_SHUTTER_PIN		(GPIO9)
+#define LED_SHUTTER_OPEN()	do{gpio_clear(LED_SHUTTER_PORT, LED_SHUTTER_PIN);}while(0)
+#define LED_SHUTTER_CLOSE()	do{gpio_set(LED_SHUTTER_PORT, LED_SHUTTER_PIN);}while(0)
+
+/*
+// We use timer 1 to process pauses with shutter
+#define Shutter_tim_isr        tim1_isr
+#define SHUTTER_TIM            TIM1
+//#define NVIC_SHUTTER_IRQ       NVIC_TIM5_IRQ
+#define NVIC_SHUTTER_IRQ       NVIC_TIM1_UP_IRQ
+#define RCC_SHUTTER_TIM        RCC_TIM1
+*/
 // Shutter pins: PC0 & PC2 are polarity & on/off pins; PC1 is feedback pin
 #define SHUTTER_PORT           (GPIOC)
 #define SHUTTER_ON_PIN         (GPIO2)

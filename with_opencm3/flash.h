@@ -26,6 +26,14 @@
 #include "main.h"
 #include "user_proto.h"
 
+/*
+ * this is a default values of stored data
+ * they could be changed by appropriate command
+ * align by 2k & make size 2k for using with high density devices
+ */
+#define FLASH_BLOCK_SIZE   (2048)
+#define FLASH_WRONG_DATA_WRITTEN 0x80
+
 #define FLASH_MAGICK ((uint32_t) 0xAA55A55A)
 
 typedef struct{
@@ -33,8 +41,8 @@ typedef struct{
 	// A-D value[x] = ADU * ADC_multipliers[x] / ADC_divisors[x]
 	uint32_t _ADC_multipliers[ADC_CHANNELS_NUMBER];
 	uint32_t _ADC_divisors[ADC_CHANNELS_NUMBER];
-	char last_addr[0];
-	char struct_end[0] __attribute__ ((aligned(2048)));
+	char last_addr[0]; // we need this pointer to calculate real size of structure
+	char struct_end[0] __attribute__ ((aligned(FLASH_BLOCK_SIZE))); // this pointer provides size of structure multiple of page size
 } flash_data;
 
 extern const flash_data Stored_Data;
