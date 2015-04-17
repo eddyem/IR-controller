@@ -22,10 +22,9 @@
 #include "main.h"
 // state of shutter - global variable to omit interface functions
 shutter_state Shutter_State = SHUTTER_NOTREADY;
-uint16_t Shutter_delay = SHUTTER_DELAY;
 int8_t manual_pin_old_state = -1;
 int8_t camera_pin_old_state = -1;
-uint8_t changed_manually = 0; // ==1 if shutter state was changed by manual switch
+//uint8_t changed_manually = 0; // ==1 if shutter state was changed by manual switch
 
 // function to be runned from timer irq
 //void (*shutter_timer_fn)() = NULL;
@@ -35,11 +34,12 @@ uint8_t changed_manually = 0; // ==1 if shutter state was changed by manual swit
 #define    SCB_DEMCR     *(volatile uint32_t *)0xE000EDFC
 
 /**
- * Make background pause in 'us' microsecond, after which run function fn_ready
+ * Make blocking pause in 'us' microsecond, after which run function fn_ready
  * @param us       - pause in microseconds
  * @param fn_ready - function to run at end of pause
+ * @param block    - == 0 if calling is non-blocking, otherwice == 1
  */
-void shutter_wait(uint32_t us, void(*fn_ready)()){
+void shutter_wait_block(uint32_t us, void(*fn_ready)()){
 	/*
 	if(!fn_ready) return;
 	//DBG("wait for previous .. ");
@@ -55,10 +55,34 @@ void shutter_wait(uint32_t us, void(*fn_ready)()){
 	// wait for us*72 cycles
 	SCB_DEMCR  |= 0x01000000;
 	DWT_CYCCNT  = 0;
-	DWT_CONTROL|= 1; // enable the counter
+	DWT_CONTROL|= 1;
 //	for (i = 0; i < us; i++) __asm__("nop");
 	while(DWT_CYCCNT < us);
 	fn_ready();
+}
+
+/**
+ * Make nonblocking pause in 'ms' millisecond, after which we should run function fn_ready
+ * run it with us == 0 and/or fn_ready == 0 to check old pause
+ */
+void shutter_wait_nonblock(uint32_t ms, void(*fn_ready)()){
+	static uint8_t waiting_for = 0; // == 1 if we are waiting for something
+	static uint32_t wait_till = 0;  // time counter for waiting
+	static void(*fn_ready_saved)() = NULL;
+	if(ms == 0 || fn_ready == 0){ // check
+		if(waiting_for && Timer >= wait_till){ // it's time
+			waiting_for = 0;
+			if(fn_ready_saved){
+				void(*f)() = fn_ready_saved;
+				fn_ready_saved = NULL;
+				f();
+			}
+		}
+	}else{
+		waiting_for = 1;
+		fn_ready_saved = fn_ready;
+		wait_till = Timer + ms; // "automatic" overload
+	}
 }
 
 // macro to open/close/set default state
@@ -83,7 +107,7 @@ void shutter_test(){
 	static shutter_state old_State = SHUTTER_NOTREADY;
 	// test for undervoltage
 	if(shutter_voltage() < SHUTTER_UNDERVOLTAGE_THRES){
-		ERR("shutter undervoltage\n");
+	//	ERR("shutter undervoltage\n");
 		Shutter_State = SHUTTER_NOTREADY;
 		shutter_off();
 		return;
@@ -92,20 +116,20 @@ void shutter_test(){
 		old_State = Shutter_State;
 		Shutter_State = SHUTTER_INITIALIZED;
 		// test for wire breakage
-		DBG("breakage test\n");
+	//	DBG("breakage test\n");
 		shutter_hiZ();  // 1,1: breakage test
-		shutter_wait(SHUTTER_OP_DELAY, shutter_test);
+		shutter_wait_block(SHUTTER_OP_DELAY, shutter_test);
 	}else{ // check breakage
 		if(shutter_error()){ // ERR==0 -> wire breakage
-			ERR("shutter wire breakage\n");
+	//		ERR("shutter wire breakage\n");
 			Shutter_State = SHUTTER_NOTREADY;
 		}else{
 			if(old_State == SHUTTER_NOTREADY){
 				Shutter_State = SHUTTER_CLOSING; // close shutter on power on
-				DBG("ready!\n");
+	//			DBG("ready!\n");
 			}else{
 				Shutter_State = old_State;
-				DBG("no errors\n");
+	//			DBG("no errors\n");
 			}
 		}
 		shutter_off();
@@ -131,8 +155,10 @@ void shutter_ready(){
 				LED_SHUTTER_CLOSE(); // turn off shutter status LED
 			else{
 				ERR("shutter is still opened\n");
-				if(!changed_manually) Shutter_State = SHUTTER_NOTREADY;
+				//if(!changed_manually)
+				Shutter_State = SHUTTER_NOTREADY;
 			}
+		break;
 		case SHUTTER_OPENED:
 			if(shutter_error()){
 				ERR("shutter overtemperature or undervoltage\n");
@@ -142,7 +168,8 @@ void shutter_ready(){
 					LED_SHUTTER_OPEN(); // turn on LED
 				else{
 					ERR("shutter is still closed\n");
-					if(!changed_manually) Shutter_State = SHUTTER_NOTREADY;
+					//if(!changed_manually)
+					Shutter_State = SHUTTER_NOTREADY;
 				}
 			}
 		break;
@@ -163,15 +190,15 @@ void shutter_ready(){
 			ERR("wrong shutter state\n");
 			print_shutter_state(lastsendfun);
 	}
-	changed_manually = 0;
+	//changed_manually = 0;
 	shutter_off();
 	if(Shutter_State == SHUTTER_NOTREADY) return;
 	if(test_err){
 		//DBG("now test for err\n");
-		shutter_wait(SHUTTER_OP_DELAY, shutter_ready); // test for overtemp or undervoltage
+		shutter_wait_nonblock(SHUTTER_DELAY, shutter_ready); // test for overtemp or undervoltage
 	}else{
 		// wait a lot of time to prevent false detections
-		shutter_wait(SHUTTER_DELAY, shutter_test);
+		shutter_wait_nonblock(SHUTTER_DELAY, shutter_test);
 	}
 }
 
@@ -208,10 +235,14 @@ shutter_state shutter_init(){
 	// feedback: floating input
 	gpio_set_mode(SHUTTER_PORT, GPIO_MODE_INPUT,
 				GPIO_CNF_INPUT_FLOAT, SHUTTER_FB_PIN);
+	// Shutter control: input pull up
+//	gpio_set_mode(SHUTTER_EXT_PORT, GPIO_MODE_INPUT,
+//				GPIO_CNF_INPUT_FLOAT, SHUTTER_CAM_PIN | SHUTTER_MAN_PIN | SHUTTER_FBSW_PIN);
+//	gpio_set(SHUTTER_EXT_PORT, SHUTTER_CAM_PIN | SHUTTER_MAN_PIN | SHUTTER_FBSW_PIN); // turn on pull up
 	//DBG("shutter fb ready\n");
 	shutter_off();
 	//shutter_timer_fn = NULL;
-	shutter_wait(SHUTTER_OP_DELAY, shutter_test);
+	shutter_wait_block(SHUTTER_OP_DELAY, shutter_test);
 	return SHUTTER_INITIALIZED; // we return this state in spite of the shutter isn't really initialized yet
 }
 
@@ -221,6 +252,9 @@ shutter_state shutter_init(){
  */
 void process_shutter(){
 	uint8_t man_pin_state, cam_pin_state, ext_open = 0, ext_close = 0;
+
+	shutter_wait_nonblock(0, NULL); // check for holded over functions
+
 	if(Shutter_State == SHUTTER_NOTREADY) return;
 
 	// test state of external control pins
@@ -240,7 +274,7 @@ void process_shutter(){
 		manual_pin_old_state = man_pin_state;
 	}else if(manual_pin_old_state != man_pin_state){ // user changed switch state -> open/close
 		manual_pin_old_state = man_pin_state;
-		changed_manually = 1;
+		//changed_manually = 1;
 		if(man_pin_state){ // close
 			ext_close = 1;
 		}else{ // open
@@ -252,13 +286,13 @@ void process_shutter(){
 	if(ext_open){ // external signal for opening shutter
 		if(Shutter_State != SHUTTER_OPENED && Shutter_State != SHUTTER_PROC_OPENING)
 			Shutter_State = SHUTTER_OPENING;
-		else
-			changed_manually = 0;
+		//else
+		//	changed_manually = 0;
 	}else if(ext_close){ // close shutter
 		if(Shutter_State != SHUTTER_CLOSED && Shutter_State != SHUTTER_PROC_CLOSING)
 			Shutter_State = SHUTTER_CLOSING;
-		else
-			changed_manually = 0;
+		//else
+		//	changed_manually = 0;
 	}
 
 	if(Shutter_State != SHUTTER_OPENING && Shutter_State != SHUTTER_CLOSING)
@@ -288,7 +322,7 @@ void process_shutter(){
 		default:
 			return;
 	}
-	shutter_wait(Shutter_delay, shutter_ready);
+	shutter_wait_nonblock(SHUTTER_DELAY, shutter_ready);
 }
 
 /*
@@ -350,6 +384,15 @@ void print_shutter_state(sendfun s){
 	}
 	if(mode == BYTE_MODE) P(")\n", s);
 	else if(mode == LINE_MODE) P(") ]\n", s);
+#ifdef EBUG
+	if(mode == BYTE_MODE){
+		P("MAN: ",s);
+		if(gpio_get(SHUTTER_EXT_PORT, SHUTTER_MAN_PIN)) P("not ",s);
+		P("pressed, EXT: ",s);
+		if(gpio_get(SHUTTER_EXT_PORT, SHUTTER_CAM_PIN)) P("not ",s);
+		P("pressed\n", s);
+	}
+#endif
 }
 
 /**

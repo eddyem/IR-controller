@@ -137,18 +137,20 @@ void AD7794_init(){
 
 int main(){
 	//int i;
-	uint32_t Old_timer = 0, lastTRDread = 0, lastTmon = 0;
+	uint32_t Shtr_blink_timer = 0, Old_timer = 0, lastTRDread = 0, lastTmon = 0;
 	int oldusbdatalen = 0;
 	//SPI_read_status SPI_stat;
 
 	// RCC clocking: 8MHz oscillator -> 72MHz system
 	rcc_clock_setup_in_hse_8mhz_out_72mhz();
-	usb_disconnect(); // turn off USB while initializing all
+
+	// turn off SWJ/JTAG
+	AFIO_MAPR = AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_OFF;
 
 	// GPIO
 	GPIO_init();
 
-	steppers_init();
+	usb_disconnect(); // turn off USB while initializing all
 
 	// init USART1
 	UART_init(USART1);
@@ -173,8 +175,12 @@ int main(){
 	ADC_init();
 	ADC_calibrate_and_start();
 
+	steppers_init();
+
 	usb_connect(); // turn on USB
 	shutter_init();
+
+	read_stored_data(); // copy stored data into RAM
 
 	LED_STATUS_OK(); // All initialized - light up LED
 	while(1){
@@ -200,9 +206,19 @@ int main(){
 		process_stepper_motors(); // check flags of motors' timers
 		process_shutter(); // shutter state machine
 
+		if(Timer - Shtr_blink_timer > 500 ||  Timer < Shtr_blink_timer){
+			Shtr_blink_timer = Timer;
+			// shutter LED will be blinking until init occurs
+			if(Shutter_State == SHUTTER_NOTREADY)
+				gpio_toggle(LED_SHUTTER_PORT, LED_SHUTTER_PIN);
+		}
+
 		if(Timer - Old_timer > 999){ // one-second cycle
 			Old_timer += 1000;
-			// if(Shutter_State == SHUTTER_NOTREADY) shutter_init();
+			// init shutter if error occurs
+			if(Shutter_State == SHUTTER_NOTREADY){
+				shutter_init();
+			}
 //OW_fill_ID(0);
 			//gpio_toggle(GPIOC, GPIO12); // toggle LED
 			//gpio_toggle(GPIO_BANK_SPI2_MOSI, GPIO_SPI2_MOSI);

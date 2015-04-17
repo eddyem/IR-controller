@@ -24,28 +24,36 @@
 //    TODO:  function "move motor to given position"
 
 static uint8_t timers_activated[2] = {0, 0}; // flag of activated timers
-uint16_t Motor_period[2] = {1300, 1300}; // one step per 1.3ms
-uint32_t Turrets_pause = 2 * TURRETS_PAUSE_US / 1300; // pause in half-steps
-volatile uint8_t timer_flag[2] = {0,0};
+static uint16_t Motor_period[2] = {3000, 2000};
+static uint32_t Turrets_pause = 2 * TURRETS_PAUSE_US / 3000; // pause in half-steps
+static volatile uint8_t timer_flag[2] = {0,0};
 // amount of steps for each motor
-volatile uint32_t Motor_steps[5] = {0, 0, 0, 0, 0};
+static volatile uint32_t Motor_steps[5] = {0, 0, 0, 0, 0};
 // absolute value of current position, usefull for stages
-volatile int32_t Motor_abs_steps[5] = {0, 0, 0, 0, 0};
+static volatile int32_t Motor_abs_steps[5] = {0, 0, 0, 0, 0};
+// increments that will be added each step to Motor_abs_steps (+1/-1)
+static int8_t Motor_step_increment[5] = {1,1,1,1,1};
 // flag of active motor
-volatile uint8_t Motor_active[5] = {0, 0, 0, 0, 0};
+static volatile uint8_t Motor_active[5] = {0, 0, 0, 0, 0};
 /*
  * Wait flags: if non-zero, flag just decremented
  * (we need it to wait a little on turrets' fixed positions to omit Halls' histeresis)
  */
-uint8_t waits[5] = {0,0,0,0,0};
+static uint8_t waits[5] = {0,0,0,0,0};
+// acceleration: if non-zero we will omit N steps after each step & decrement accell value
+static uint8_t accel[5] = {0,0,0,0,0};
 // Halls & end-switches values on previous step
-uint8_t lastpos[5] = {0,0,0,0,0};
+static uint8_t lastpos[5] = {0,0,0,0,0};
 // number of position to move turret or stage, zero to move only for N given steps
 uint8_t move2pos[5] = {0,0,0,0,0};
 // number of positions passed for given
-uint8_t positions_pass[3] = {0,0,0};
+static uint8_t positions_pass[3] = {0,0,0};
 // maximum amount of positions passed to reach given
 #define MAX_POSITIONS_PASS    (8)
+
+// multipliers for linear acceleration (in reverce order)
+static const uint8_t accel_mults[16] = {1, 2, 2, 2, 2, 2, 2, 3, 3, 4, 4, 5, 6, 8, 10, 16};
+
 
 /**
  * Setup stepper motors' timer Tim
@@ -105,9 +113,10 @@ void steppers_init(){
 				GPIO_CNF_OUTPUT_PUSHPULL, MOTOR_TIM2_PIN);
 	// EN pins
 	// WARNING! EN pins would be shortened to GND in case of overcurrent/overheating
-	// so, they should be pull-up inputs in active mode & pull-down inputs in inactive mode!!!
+	// so, when active they should be opendrain outputs with 100k external resistor to +5V or pullup inputs!!!
+	// inactive: opendrain output
 	gpio_set_mode(MOTOR_EN_PORT, GPIO_MODE_OUTPUT_2_MHZ,
-				GPIO_CNF_INPUT_PULL_UPDOWN, MOTOR_EN_MASK);
+				GPIO_CNF_OUTPUT_OPENDRAIN, MOTOR_EN_MASK);
 	gpio_clear(MOTOR_EN_PORT, MOTOR_EN_MASK);
 	// DIR pins
 	gpio_set_mode(MOTOR_DIR_PORT, GPIO_MODE_OUTPUT_2_MHZ,
@@ -130,10 +139,10 @@ uint8_t test_stages_endpos(uint8_t num, uint8_t curpos){
 	const uint8_t stage_plus[2] = {STAGE_CHECK(3, PLUS), STAGE_CHECK(4, PLUS)};
 	const uint8_t stage_minus[2] = {STAGE_CHECK(3, MINUS), STAGE_CHECK(4, MINUS)};
 	uint8_t negative_dir = 0;
-	num -= 3; // convern num to index in arrays
-	if((uint16_t)(GPIO_IDR(MOTOR_DIR_PORT) & MOTOR_DIR_PIN(num))){ // negative direction
+	if((uint16_t)(GPIO_ODR(MOTOR_DIR_PORT) & MOTOR_DIR_PIN(num))){ // negative direction
 		negative_dir = 1;
 	}
+	num -= 3; // convern num to index in arrays
 	if(stage_plus[num] == curpos){ // we are on "+" end-switch
 		if(!negative_dir){ // and wanna move to "+"
 			ERR("End-switch +\n");
@@ -180,6 +189,7 @@ uint8_t check_ep(uint8_t num){
 	return 0;
 }
 
+
 /**
  * Move motor Motor_number to User_value steps
  * return 0 if motor is still moving
@@ -192,6 +202,16 @@ uint8_t move_motor(uint8_t num, int32_t steps){
 		ERR("moving\n");
 		return 0;
 	}
+	int voltage = power_voltage();
+	if(voltage < MOTORS_VOLTAGE_THRES){
+		ERR("undervoltage!\n");
+		if(mode == LINE_MODE){
+			P("[ " STR_MOTORS_VOLTAGE " ", lastsendfun);
+			print_int(voltage, lastsendfun);
+			P(" ]\n", lastsendfun);
+		}
+		return 0;
+	}
 #ifdef EBUG
 	if(mode == BYTE_MODE){
 		P("move ", lastsendfun);
@@ -201,11 +221,12 @@ uint8_t move_motor(uint8_t num, int32_t steps){
 		lastsendfun('\n');
 	}
 #endif
-	Motor_abs_steps[num] += steps; // fix absolute position
 	if(steps < 0){
 		negative_dir = 1;
+		Motor_step_increment[num] = -1;
 		steps = -steps;
-	}
+	}else
+		Motor_step_increment[num] = 1;
 	curpos = check_ep(num);
 	lastpos[num] = curpos;
 	if(negative_dir){
@@ -220,10 +241,21 @@ uint8_t move_motor(uint8_t num, int32_t steps){
 	// set all flags and variables
 	Motor_steps[num] = steps; // we run in full-step mode!
 	waits[num] = 0;
+	accel[num] = START_MOTORS_ACCEL_IDX_4;
 	Motor_active[num] = 1;
 	if(num < 3) // this is turret -> reset counter of passed positions
 		positions_pass[num] = 0;
+	// pullup input when active
+	gpio_set_mode(MOTOR_EN_PORT, GPIO_MODE_INPUT,
+			GPIO_CNF_INPUT_PULL_UPDOWN, MOTOR_EN_PIN(num));
 	gpio_set(MOTOR_EN_PORT, MOTOR_EN_PIN(num));
+/*
+	P("set: ", lastsendfun);
+	print_int(GPIO_ODR(MOTOR_EN_PORT) & MOTOR_EN_MASK, lastsendfun);
+	P(", get: ", lastsendfun);
+	print_int(GPIO_IDR(MOTOR_EN_PORT) & MOTOR_EN_MASK, lastsendfun);
+	lastsendfun('\n');
+*/
 	return 1;
 }
 
@@ -232,10 +264,17 @@ void stop_motor(uint8_t num){
 	const uint8_t stage_minus[2] = {STAGE_CHECK(3, MINUS), STAGE_CHECK(4, MINUS)};
 	//if(!) return;
 	MSG("stop motor ", "[ " STR_STOP_ALL_MOTORS " ");
-	if(mode != BINARY_MODE) lastsendfun('0' + num);
+	if(mode != BINARY_MODE){
+		lastsendfun('0' + num);
+		lastsendfun(' ');
+	}
+	// this function could be called simply to check motors' position
+	// so, we should check wether motor is active before changing EN state
 	if(Motor_active[num]){
 		if(!gpio_get(MOTOR_EN_PORT, MOTOR_EN_PIN(num)) && mode == LINE_MODE)
-			P(" HEAT ", lastsendfun);
+			P("HEAT ", lastsendfun);
+		gpio_set_mode(MOTOR_EN_PORT, GPIO_MODE_OUTPUT_2_MHZ,
+			GPIO_CNF_OUTPUT_OPENDRAIN, MOTOR_EN_PIN(num));
 		gpio_clear(MOTOR_EN_PORT, MOTOR_EN_PIN(num));
 		Motor_active[num] = 0;
 	}
@@ -245,24 +284,16 @@ void stop_motor(uint8_t num){
 		move2pos[num] = 0; // reset target position value
 		if(curpos == 1){
 			Motor_abs_steps[num] = 0;
-			goto retn;
 		}else{
 			if(curpos == 0) // a turret is out of fixed position
-				MSG(" stop out of position", "ERR ");
+				MSG("stop out of position", "ERR ");
 		}
 	}else{ // linear stage
 		if(curpos == stage_minus[num-3]){
 			Motor_abs_steps[num] = 0;
-			goto retn;
 		}
 	}
-	int32_t sign = 1;
-	if(GPIO_IDR(MOTOR_DIR_PORT) & MOTOR_DIR_PIN(num)){ // negative direction
-		sign = -1;
-	}
-	Motor_abs_steps[num] -= Motor_steps[num] * sign;
 	Motor_steps[num] = 0;
-retn:
 	BYTE_MSG(" absolute steps: ");
 	print_int(Motor_abs_steps[num], lastsendfun);
 	if(mode == LINE_MODE) P(" ]", lastsendfun);
@@ -287,10 +318,18 @@ void process_stepper_motors(){
 	const uint32_t pins[] = {MOTOR_TIM1_PIN, MOTOR_TIM2_PIN};
 	const uint8_t startno[] = {0, 3};
 	const uint8_t stopno[]  = {3, 5};
+	//static uint8_t showcurpos[5] = {0,0,0,0,0};
 	uint8_t curpos;
+	const uint32_t Tim[2] = {TIM3, TIM4};
 	for(j = 0; j < 2; j++){
+		// new period of motors' timer -- maximum value for all periods in group
+		uint16_t new_period = 0;
 		if(timer_flag[j]){
 			timer_flag[j] = 0;
+			uint8_t is_active = 0;
+			for(i = startno[j]; i < stopno[j]; i++)
+				if(Motor_active[i]) is_active = 1;
+			if(!is_active) continue; // don't generate clock pulses when there's no moving motors
 			gpio_toggle(ports[j], pins[j]); // change clock state
 			if(!gpio_get(ports[j], pins[j])){ // negative pulse - omit this half-step
 				continue;
@@ -303,16 +342,20 @@ void process_stepper_motors(){
 						//(what if there's some slipping or so on?)
 				}else{ // we should move further
 					if(waits[i]){ // waiting for position stabilisation
+						uint8_t got_new_position = 0;
 						waits[i]--;
 						if(waits[i]) continue; // there's more half-steps to skip
+						// tell user current position if we was stopped at fixed pos
+						if(lastpos[i] == 0 && curpos != 0){
+							got_new_position = 1;
+							MSG("position of motor ", "[ " STR_ENDSW_STATE " ");
+							print_int(i, lastsendfun);
+							lastsendfun(' ');
+							print_int(curpos, lastsendfun);
+							if(mode == LINE_MODE) P(" ]", lastsendfun);
+							lastsendfun('\n');
+						}
 						lastpos[i] = curpos;
-						// tell user current position
-						MSG("position of motor ", "[ " STR_ENDSW_STATE " ");
-						print_int(i, lastsendfun);
-						lastsendfun(' ');
-						print_int(curpos, lastsendfun);
-						if(mode == LINE_MODE) P(" ]", lastsendfun);
-						lastsendfun('\n');
 						// turn on motor after pause
 						gpio_set(MOTOR_EN_PORT, MOTOR_EN_PIN(i));
 						if(j == 1){ // this is a linear stage
@@ -323,7 +366,7 @@ void process_stepper_motors(){
 							if(move2pos[i]){ // we should move to specific position
 								if(curpos == move2pos[i]){ // we are on position
 									stop_motor(i);
-								}else{ // add some steps to move to next position
+								}else if(got_new_position){ // add some steps to move to next position
 									if(++positions_pass[i] > MAX_POSITIONS_PASS){
 										ERR("Can't reach given position");
 										stop_motor(i);
@@ -341,16 +384,32 @@ void process_stepper_motors(){
 						}
 						if(lastpos[i] != curpos){ // transition process
 							if(lastpos[i] == 0){ // come towards position
-								waits[i] = Turrets_pause;
-								// turn off motor while a pause
+								if(j == 0){ // this is a turret: make pause & prepare acceleration for start
+									waits[i] = Turrets_pause;
+									accel[i] = START_MOTORS_ACCEL_IDX_4;
+								}else{
+									waits[i] = 1;
+								}
+								// turn off motor while a pause (turret will be locked at fixed position by spring)
+								// for this short pause we can simply do a pulldown
 								gpio_clear(MOTOR_EN_PORT, MOTOR_EN_PIN(i));
 								continue;
 							}
 							lastpos[i] = curpos;
 						}
 						Motor_steps[i]--;
+						// change value of current motor's position
+						Motor_abs_steps[i] += Motor_step_increment[i];
+						if(accel[i]){ // we are starting
+							uint32_t NP = (uint32_t)Motor_period[j] * accel_mults[(accel[i]--)/4];
+							if(NP > 0xffff) NP = 0xffff;
+							if(new_period < NP) new_period = (uint16_t)NP;
+						}
 					}
 				}
+			}
+			if(new_period){ // we have to change motors' speed when accelerating
+				timer_set_period(Tim[j], new_period);
 			}
 		}
 	}
@@ -399,6 +458,33 @@ void set_motor_period(uint8_t num, uint16_t period){
 	else Motor_period[N] = period;
 	if(!timers_activated[N]) setup_timer(N);
 	else timer_set_period(Tim, period);
+}
+
+void get_motors_position(){
+	uint8_t i;
+	for(i = 0; i < 5; i++){
+		MSG("position of ", "[ " STR_MOTOR_POSITION " ");
+		lastsendfun(i+'0');
+		MSG(" is ", " ");
+		print_int(Motor_abs_steps[i], lastsendfun);
+		if(Motor_active[i]){
+			lastsendfun(' ');
+			P("moving", lastsendfun);
+		}
+		if(mode == LINE_MODE) P(" ]", lastsendfun);
+		lastsendfun('\n');
+	}
+}
+
+/**
+ * displays periods of both generators
+ */
+void show_motors_period(sendfun s){
+	P("[ " STR_SHOW_PERIOD " ", s);
+	print_int((int32_t)Motor_period[0],s);
+	s(' ');
+	print_int((int32_t)Motor_period[1],s);
+	P(" ]\n", s);
 }
 
 /*

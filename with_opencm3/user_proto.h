@@ -87,6 +87,8 @@ void print_hex(uint8_t *buff, uint8_t l, sendfun s);
 #define STR_STOP_ALL_MOTORS			"B"
 #define CMD_ENDSW_STATE				'E'
 #define STR_ENDSW_STATE				"E"
+#define CMD_SHOW_PERIOD				'G'
+#define STR_SHOW_PERIOD				"G"
 #define CMD_SHTR_VOLTAGE			'h'
 #define STR_SHTR_VOLTAGE			"h"
 #define CMD_EXTADC_INIT				'i'
@@ -99,5 +101,7 @@ void print_hex(uint8_t *buff, uint8_t l, sendfun s);
 #define STR_SHTR_STATE				"t"
 #define CMD_PRINT_TIME				'T'
 #define STR_PRINT_TIME				"T"
+#define CMD_MOTOR_POSITION			'Z'
+#define STR_MOTOR_POSITION			"Z"
 
 #endif // __USER_PROTO_H__

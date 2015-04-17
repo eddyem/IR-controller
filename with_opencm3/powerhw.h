@@ -39,7 +39,6 @@ typedef enum{
 } shutter_state;
 
 extern shutter_state Shutter_State;
-extern uint16_t Shutter_delay;
 
 shutter_state shutter_init();
 void process_shutter();

@@ -41,11 +41,11 @@ enum{
 	UVAL_ENTERED,	// value entered but not printed
 	UVAL_BAD		// entered bad value
 };
-uint8_t Uval_ready = UVAL_PRINTED;
+static uint8_t Uval_ready = UVAL_PRINTED;
 
 int read_int(char *buf, int cnt);
 
-intfun I = NULL; // function to process entered integer
+static intfun I = NULL; // function to process entered integer
 
 #define READINT() do{i += read_int(&buf[i+1], len-i-1);}while(0)
 #define WRONG_COMMAND() do{if(mode == BYTE_MODE) command = '?';}while(0)
@@ -110,18 +110,18 @@ int div_mul = 0; // 0 - multip., !0 - div.
  * change dividers/multipliers
  * work only in BYTE_MODE
  */
-uint8_t ch_divmul(int32_t v, sendfun s){
+uint8_t ch_divmul(int32_t v, _U_ sendfun s){
 	uint32_t val = (uint32_t) v;
 	if(adc_channel == -1) return 0;
 	if(div_mul){ // != 0 - divisors
-		flash_store_U32((uint32_t)&ADC_divisors[adc_channel], &val);
+		ADC_divisors[adc_channel] = val;
 	}else{ // == 0 - mul
-		flash_store_U32((uint32_t)&ADC_multipliers[adc_channel], &val);
+		ADC_multipliers[adc_channel] = val;
 	}
 	adc_channel = -1;
-	P("stored\n", s);
 	return 1;
 }
+
 /**
  * Change divisor (work only in BYTE_MODE)
  * @param v - user value (sensor number)
@@ -144,8 +144,9 @@ uint8_t try_ch_divmul(int32_t v, sendfun s){
  */
 uint8_t endswitchstate(int32_t v, sendfun s){
 	int32_t i;
-	if(v < 0 || v > 4){
-		if(mode == BYTE_MODE) P("Wrong motor number\n", s);
+	if(v < 0 || v > 4){ // show all end-switches
+		for(i = 0; i < 5; i++)
+			endswitchstate(i, s);
 		return 0;
 	}
 	i = check_ep(v);
@@ -163,6 +164,11 @@ uint8_t endswitchstate(int32_t v, sendfun s){
 		if(mode == LINE_MODE) P(" ]\n", s);
 		else s('\n');
 	}
+/*
+uint32_t h = (GPIO_IDR(GPIOD) & 0xff) | ((GPIO_IDR(GPIOB)<<2) & 0x300) |
+	((GPIO_IDR(GPIOC)<<3) & 0x1C00) | ((GPIO_IDR(GPIOA)&0x100)<<5);
+print_hex((uint8_t*)&h, 4, lastsendfun);
+*/
 	return 0;
 }
 
@@ -170,28 +176,32 @@ uint8_t endswitchstate(int32_t v, sendfun s){
  * moves turret 'active_motor' to position v
  */
 uint8_t move_turret(int32_t v, sendfun s){
-	const int32_t maxpos[3] = {8, 6, 6}; // maximum position number for given turret
+	const int32_t maxpos[3] = {6, 6, 8}; // maximum position number for given turret
 	int32_t sign = 1;
 	if(active_motor > 2){
 		if(mode == BYTE_MODE) P("Wrong turret number\n", s);
 		return 0;
 	}
 	int32_t m = maxpos[active_motor];
-	if(v > m){
+	if(v > m || v < 1){
 		if(mode == BYTE_MODE){
 			P("Wrong position, shoud be not more than ", s);
 			print_int(m, s);
 		}
 		return 0;
 	}
+	uint8_t curpos = check_ep(active_motor);
+	if(curpos == v){ // we are in that position
+		endswitchstate(active_motor, s);
+		return 1;
+	}
 	move2pos[active_motor] = v;
 	// check the nearest direction
-	uint8_t curpos = check_ep(active_motor);
 	if(curpos){ // we are not between positions
-		if((v + m - curpos) > m/2) // rotation in positive direction will take more steps than in negative
+		if(((v + m - curpos) % m) > m/2) // rotation in positive direction will take more steps than in negative
 			sign = -1; // move CCV
 	}
-	return move_motor(active_motor, TURRETS_NEXT_POS_STEPS * sign);
+	return move_motor(active_motor, sign * TURRETS_NEXT_POS_STEPS);
 }
 
 /**
@@ -207,7 +217,7 @@ void help(sendfun s){
 	pr("D\tturn AD7794 to double conversion mode");
 	pr(STR_ENDSW_STATE "\tshow end-switches state for given motor");
 	pr("F\tdump flash data");
-	//pr("G");
+	pr(STR_SHOW_PERIOD "\tget motors' speed");
 	pr("H\tshow this help");
 	pr("I\tturn off AD7794 init flag");
 	pr("J\tmove slits (0) wheel to Nth position");
@@ -226,13 +236,13 @@ void help(sendfun s){
 	//pr("W\t(reserved)");
 	pr("X\tset timer period for linear stages");
 	//pr("Y");
-	//pr("Z");
+	pr("Z\tShow motors' positions");
 	//pr("a");
 	//pr("b");
 	pr("c\tclose shutter");
 	pr("d\tchange value of ADC divisor No N");
 	//pr("e");
-	//pr("f");
+	pr("f\tsave current values of ADC mult/div to flash");
 	pr("g\tchange AD7794 gain");
 	pr(STR_SHTR_VOLTAGE "\tshow shutter voltage");
 	pr(STR_EXTADC_INIT "\tinit AD7794");
@@ -283,31 +293,24 @@ int parce_incoming_buf(char *buf, int len, sendfun s){
 		}
 	}else if(mode == LINE_MODE){ // text mode: check for "]\n" presence
 		uint8_t bad_cmd = 1;
-s(buf[0]);
-P(" check buffer in line mode: ", s);
 		if(buf[0] == '['){
 		for(j = 1; j < len; j++){
-s(buf[j]);
 			if(buf[j] != '\n') continue; // search end of line
 			else{
 				if(buf[j-1] == ']'){
-P("OK, good!\n", s);
 					bad_cmd = 0;
 					len = j; buf[j] = 0; // truncate buffer to only one command
 
 					break;
 				}
 				else{
-P("broken command!\n",s);
 					return 0; // end of line without closing bracket
 				}
 			}
 		}} else{
-P("wrong first\n",s );
 			return 0;
 		}
 		if(bad_cmd){
-P("not full\n",s);
 			return len; // not enough data in buffer
 		}
 	}
@@ -364,6 +367,16 @@ P("not full\n",s);
 				I = endswitchstate;
 				READINT();
 			break;
+			case 'f': // store flash data
+				if(mode != BYTE_MODE) return 0;
+				uint8_t f_flag = save_flashdata();// == 0 if all OK, or return error flag
+				if(f_flag){
+					P("error! can't store data, errno: ", s);
+					print_int((int32_t) f_flag, s);
+					s('\n');
+				}else
+					P("data stored successfully\n", s);
+			break;
 			case 'F': // dump flash data (only in byte mode)
 				if(mode != BYTE_MODE) return 0;
 				dump_flash_data(s);
@@ -372,6 +385,10 @@ P("not full\n",s);
 				if(mode != BYTE_MODE) return 0;
 				I = set_ADC_gain;
 				READINT();
+			break;
+			case CMD_SHOW_PERIOD: // [G] get motors' speed
+				show_motors_period(s);
+				do_echo = 0;
 			break;
 			case CMD_SHTR_VOLTAGE: // [h] show sHutter voltage * 100
 				if(mode == LINE_MODE) P("[ " STR_SHTR_VOLTAGE " ", s);
@@ -414,6 +431,7 @@ P("not full\n",s);
 				print_int(power_voltage(), s);
 				if(mode == LINE_MODE) P(" ]", s);
 				newline(s);
+				do_echo = 0;
 			break;
 			case 'P': //  (only for byte mode)
 				if(mode != BYTE_MODE) return 0;
@@ -472,6 +490,25 @@ P("not full\n",s);
 				I = set_timr;
 				READINT();
 			break;
+			case CMD_MOTOR_POSITION: // [Z]: show positions of all motors
+				get_motors_position();
+				do_echo = 0;
+			break;
+/*
+			case '_':
+				P("set: ", s);
+				print_int(GPIO_ODR(MOTOR_EN_PORT) & MOTOR_EN_MASK, s);
+				P(", get: ", s);
+				print_int(gpio_get(MOTOR_EN_PORT, MOTOR_EN_MASK), s);
+				s('\n');
+			break;
+			case '(':
+				gpio_set(MOTOR_EN_PORT, MOTOR_EN_MASK);
+			break;
+			case ')':
+				gpio_clear(MOTOR_EN_PORT, MOTOR_EN_MASK);
+			break;
+*/
 			case '\n': // show newline, space and tab as is
 			case '\r':
 			case ' ':

@@ -23,7 +23,12 @@
 #include <libopencm3/stm32/flash.h>
 #include <string.h>
 
-const flash_data Stored_Data __attribute__ ((aligned(FLASH_BLOCK_SIZE))) = {
+// this is variable structure saved in RAM for ability of data changing
+stored_data Stored_Data;
+
+// this is constant structure saved in flash. It have to be copied to Stored_Data after run
+const flash_data Flash_Data __attribute__ ((aligned(FLASH_BLOCK_SIZE))) = {
+.all_stored = {
 	//.magick = FLASH_MAGICK,
 	._ADC_multipliers = {100000,100000,100000,100000,100000,100000,100000,100000, // TRD
 		26, // shutter
@@ -33,12 +38,13 @@ const flash_data Stored_Data __attribute__ ((aligned(FLASH_BLOCK_SIZE))) = {
 		25, // shutter
 		7   // power
 	}
+}
 };
 
-uint32_t flash_write_data(uint32_t *dataptr, uint16_t datalen){
-	uint32_t start_address = (uint32_t)&Stored_Data;
+uint8_t flash_write_data(uint32_t *dataptr, uint16_t datalen){
+	uint32_t start_address = (uint32_t)&(Flash_Data.all_stored);
 	uint16_t i, rem;
-	uint32_t ret = 0;
+	uint8_t ret = 0;
 	flash_unlock();
 	DBG("erase\n");
 	//Erasing page
@@ -76,14 +82,18 @@ endoffunction:
 	return ret;
 }
 
-uint32_t  flash_store_U32(uint32_t addr, uint32_t *data){
-	flash_data Saved_Data;
-	uint32_t sz, ptrdiff;
-	sz = (uint32_t)&Stored_Data.last_addr - (uint32_t)&Stored_Data;
-	ptrdiff = addr - (uint32_t)&Stored_Data;
-	memcpy((void*)&Saved_Data, (void*)&Stored_Data, sz);
-	memcpy((void*)((uint32_t)&Saved_Data + ptrdiff), (void*)data, 4);
-	return flash_write_data((uint32_t*)&Saved_Data, sz);
+/**
+ * save all data from RAM to flash
+ */
+uint8_t save_flashdata(){
+//	uint32_t sz = (uint32_t)&Stored_Data.last_addr - (uint32_t)&Stored_Data;
+	//return flash_write_data((uint32_t*)&Stored_Data, sz);
+	return flash_write_data((uint32_t*)&Stored_Data, sizeof(stored_data));
+}
+
+void read_stored_data(){
+//	uint32_t sz = (uint32_t)&Stored_Data.last_addr - (uint32_t)&Stored_Data;
+	memcpy((void*)&Stored_Data, (void*)&(Flash_Data.all_stored), sizeof(stored_data));
 }
 
 /**
@@ -96,12 +106,12 @@ void dump_flash_data(sendfun s){
 	P("\nADC multipliers: ", s);
 	for(i = 0; i < ADC_CHANNELS_NUMBER; i++){
 		if(i) P(", ", s);
-		print_int(ADC_multipliers[i], s);
+		print_int(Flash_Data.all_stored._ADC_multipliers[i], s);
 	}
 	P("\nADC divisors: ", s);
 	for(i = 0; i < ADC_CHANNELS_NUMBER; i++){
 		if(i) P(", ", s);
-		print_int(ADC_divisors[i], s);
+		print_int(Flash_Data.all_stored._ADC_divisors[i], s);
 	}
 	s('\n');
 }

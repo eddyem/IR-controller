@@ -25,32 +25,45 @@
 #include <libopencm3/stm32/timer.h>
 
 // default pause to make sure that turret is on position
-#define TURRETS_PAUSE_US 30000
+#define TURRETS_PAUSE_US (50000)
 // max amount of steps to add to turret for moving to next position
-#define TURRETS_NEXT_POS_STEPS  300
+#define TURRETS_NEXT_POS_STEPS  (500)
+// (index/4) in accel_mults[] for started acceleration
+#define START_MOTORS_ACCEL_IDX_4 (63)
 
 #ifndef CONCAT
 #define CONCAT(A, B) A ## B
 #endif
 
 // check status of end-switches and Halls
+/*
 // Motor 0 == turret 0, PD0..PD3
 #define _CHECK_EP0  ((~GPIO_IDR(GPIOD)) & 0x0f)
 // Motor 1 == turret 1, PD4..PD6
 #define _CHECK_EP1  (((~GPIO_IDR(GPIOD)) >> 4) & 0x07)
 // Motor 2 == turret 2, PD7, PB6, PB7
 #define _CHECK_EP2  ((((~GPIO_IDR(GPIOD)) >> 7) & 0x01) | (((~GPIO_IDR(GPIOB))>> 6) & 0x03))
+*/
+// Motor 0 == turret 0, PD0..PD2
+#define _CHECK_EP0  ((~GPIO_IDR(GPIOD)) & 0x07)
+// Motor 1 == turret 1, PD3..PD5
+#define _CHECK_EP1  (((~GPIO_IDR(GPIOD)) >> 3) & 0x07)
+// Motor 2 == turret 2, PD6, PD7, PB6, PB7
+#define _CHECK_EP2  ((((~GPIO_IDR(GPIOD)) >> 6) & 0x03) | (((~GPIO_IDR(GPIOB))>> 4) & 0x0c))
 // Motor 3 == long (VPHG, pupil stop) stage, PC7/PC8  (down/up)
 #define _CHECK_EP3  (((~GPIO_IDR(GPIOC)) >> 7) & 0x03)
 // Motor 4 == short (focus) stage, PC9/PA8 (down/up)
-#define _CHECK_EP4  ((((~GPIO_IDR(GPIOC)) >> 9) & 0x01) | (((~GPIO_IDR(GPIOA)) >> 8) & 0x01))
+#define _CHECK_EP4  ((((~GPIO_IDR(GPIOC)) >> 9) & 0x01) | (((~GPIO_IDR(GPIOA)) >> 7) & 0x02))
+
 // this macro returns end-switches & Hall status: 0 - not active, 1 - active
 #define CHECK_EP(X)   CONCAT(_CHECK_EP, X)
 // end-switches for motors 3,4 (stage 1 and stage 2): stop when direction positive/negative
-#define EP3PLUS     2
-#define EP3MINUS    1
-#define EP4PLUS     2
-#define EP4MINUS    1
+// down is 1, up is 2
+// moving down is positive
+#define EP3PLUS     1
+#define EP3MINUS    2
+#define EP4PLUS     1
+#define EP4MINUS    2
 #define STAGE_CHECK(N, DIR)  CONCAT(EP ## N, DIR)
 
 // setup ports: PA8, PB6, PB7, PC7..PC9, PD0..PD7
@@ -79,6 +92,8 @@ uint8_t move_motor(uint8_t num, int32_t steps);
 void stop_motor(uint8_t num);
 void set_motor_period(uint8_t num, uint16_t period);
 uint8_t check_ep(uint8_t num);
+void get_motors_position();
 
+void show_motors_period(sendfun s);
 
 #endif // __STEPPER_MOTORS_H__

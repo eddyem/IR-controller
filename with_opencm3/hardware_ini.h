@@ -97,6 +97,8 @@ void ADC_calibrate_and_start();
 #define MOTOR_TIM1_PIN		(GPIO6)
 #define MOTOR_TIM2_PORT		(GPIOD)
 #define MOTOR_TIM2_PIN		(GPIO15)
+// don't even try to move motor if motors' voltage less than 9.5V
+#define MOTORS_VOLTAGE_THRES  (950)
 
 /*
  * One Wire interface
@@ -128,14 +130,6 @@ void ADC_calibrate_and_start();
 #define LED_SHUTTER_OPEN()	do{gpio_clear(LED_SHUTTER_PORT, LED_SHUTTER_PIN);}while(0)
 #define LED_SHUTTER_CLOSE()	do{gpio_set(LED_SHUTTER_PORT, LED_SHUTTER_PIN);}while(0)
 
-/*
-// We use timer 1 to process pauses with shutter
-#define Shutter_tim_isr        tim1_isr
-#define SHUTTER_TIM            TIM1
-//#define NVIC_SHUTTER_IRQ       NVIC_TIM5_IRQ
-#define NVIC_SHUTTER_IRQ       NVIC_TIM1_UP_IRQ
-#define RCC_SHUTTER_TIM        RCC_TIM1
-*/
 // Shutter pins: PC0 & PC2 are polarity & on/off pins; PC1 is feedback pin
 #define SHUTTER_PORT           (GPIOC)
 #define SHUTTER_ON_PIN         (GPIO2)
@@ -145,9 +139,9 @@ void ADC_calibrate_and_start();
 #define SHUTTER_VOLTAGE_THRES  (2000)
 // minimum voltage that should be on capasitor if power source is on
 #define SHUTTER_UNDERVOLTAGE_THRES  (700)
-// delay in operations (open/close) in us (according to shutter's datasheet it's about 12ms)
-#define SHUTTER_DELAY  (12500)
-// delay for error test
+// delay in operations (open/close) in milliseconds (according to shutter's datasheet it's about 12ms -> make 15)
+#define SHUTTER_DELAY  (15)
+// delay for error test (in microseconds)
 #define SHUTTER_OP_DELAY (200)
 
 // ADC_value[8] is U36, ADC_value[9] is U10
