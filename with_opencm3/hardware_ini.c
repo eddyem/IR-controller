@@ -45,7 +45,9 @@
  * U10 -> 0  PA0
  */
 uint8_t adc_channel_array[16] = {9,8,15,14,7,6,5,4,1,0};
-volatile uint16_t ADC_value[ADC_CHANNELS_NUMBER]; // ADC DMA value
+// ADC_value array have 9 records for each value for ability of median filtering
+// values for channel num are ADC_value[num + ADC_CHANNELS_NUMBER*i]
+volatile uint16_t ADC_value[ADC_CHANNELS_NUMBER*9]; // ADC DMA value
 
 /*
  * Configure SPI ports
@@ -164,7 +166,7 @@ void adc_dma_on(){
 	dma_channel_reset(DMA1, DMA_CHANNEL1);
 	DMA1_CPAR1 = (uint32_t) &(ADC_DR(ADC1));
 	DMA1_CMAR1 = (uint32_t) ADC_value;
-	DMA1_CNDTR1 = ADC_CHANNELS_NUMBER;
+	DMA1_CNDTR1 = ADC_CHANNELS_NUMBER * 9; // *9 for median filtering
 	DMA1_CCR1 = DMA_CCR_MINC | DMA_CCR_PSIZE_16BIT | DMA_CCR_MSIZE_16BIT
 			| DMA_CCR_CIRC | DMA_CCR_PL_HIGH | DMA_CCR_EN;
 	adc_enable_dma(ADC1);
@@ -253,19 +255,36 @@ int power_voltage(){
 	return (int)val;
 }
 
+// This is some data for optimal median filtering of array[9]
+uint16_t temp;
+#define PIX_SORT(a,b) { if ((a)>(b)) PIX_SWAP((a),(b)); }
+#define PIX_SWAP(a,b) { temp=(a);(a)=(b);(b)=temp; }
+uint16_t p[9]; // buffer for median filtering
+uint16_t opt_med9(){
+    PIX_SORT(p[1], p[2]) ; PIX_SORT(p[4], p[5]) ; PIX_SORT(p[7], p[8]) ;
+    PIX_SORT(p[0], p[1]) ; PIX_SORT(p[3], p[4]) ; PIX_SORT(p[6], p[7]) ;
+    PIX_SORT(p[1], p[2]) ; PIX_SORT(p[4], p[5]) ; PIX_SORT(p[7], p[8]) ;
+    PIX_SORT(p[0], p[3]) ; PIX_SORT(p[5], p[8]) ; PIX_SORT(p[4], p[7]) ;
+    PIX_SORT(p[3], p[6]) ; PIX_SORT(p[1], p[4]) ; PIX_SORT(p[2], p[5]) ;
+    PIX_SORT(p[4], p[7]) ; PIX_SORT(p[4], p[2]) ; PIX_SORT(p[6], p[4]) ;
+    PIX_SORT(p[4], p[2]) ; return(p[4]) ;
+}
+#undef PIX_SORT
+#undef PIX_SWAP
 /**
- * Resistance of TRD
+ * Resistance of TRD with median filtering
  * @param num - number of sensor
  * @return R*100
- * we measure
  */
 int TRD_value(uint8_t num){
-	uint32_t v = ADC_value[num];
+	int i, addr = num;
+	for(i = 0; i < 9; i++, addr+=ADC_CHANNELS_NUMBER) // first we should prepare array for optmed
+		p[i] = ADC_value[addr];
+	uint32_t v = opt_med9();
 	uint32_t r = v * ADC_multipliers[num];
 	r /= (uint32_t)(4096 - v) * ADC_divisors[num];
 	return (int) r;
 }
-
 
 uint16_t tim2_buff[TIM2_DMABUFF_SIZE];
 uint16_t tim2_inbuff[TIM2_DMABUFF_SIZE];

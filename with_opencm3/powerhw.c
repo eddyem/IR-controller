@@ -241,6 +241,8 @@ shutter_state shutter_init(){
 //	gpio_set(SHUTTER_EXT_PORT, SHUTTER_CAM_PIN | SHUTTER_MAN_PIN | SHUTTER_FBSW_PIN); // turn on pull up
 	//DBG("shutter fb ready\n");
 	shutter_off();
+	camera_pin_old_state = (gpio_get(SHUTTER_EXT_PORT, SHUTTER_CAM_PIN)) ? 1 : 0;
+	manual_pin_old_state = (gpio_get(SHUTTER_EXT_PORT, SHUTTER_MAN_PIN)) ? 1 : 0;
 	//shutter_timer_fn = NULL;
 	shutter_wait_block(SHUTTER_OP_DELAY, shutter_test);
 	return SHUTTER_INITIALIZED; // we return this state in spite of the shutter isn't really initialized yet
@@ -270,9 +272,7 @@ void process_shutter(){
 	man_pin_state = (gpio_get(SHUTTER_EXT_PORT, SHUTTER_MAN_PIN)) ? 1 : 0;
 	// to avoid opening shutter if user forget to set manual switch to "closed" position
 	// all operations with manual switch processed only in changing state of the switch
-	if(manual_pin_old_state == -1){ // refresh manual pin state
-		manual_pin_old_state = man_pin_state;
-	}else if(manual_pin_old_state != man_pin_state){ // user changed switch state -> open/close
+	if(manual_pin_old_state != man_pin_state){ // user changed switch state -> open/close
 		manual_pin_old_state = man_pin_state;
 		//changed_manually = 1;
 		if(man_pin_state){ // close

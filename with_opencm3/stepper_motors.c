@@ -189,27 +189,47 @@ uint8_t check_ep(uint8_t num){
 	return 0;
 }
 
-
 /**
- * Move motor Motor_number to User_value steps
- * return 0 if motor is still moving
+ * test 12V voltage
+ * if it is less than MOTORS_VOLTAGE_THRES, return 1 & show err message
+ * else return 0
  */
-uint8_t move_motor(uint8_t num, int32_t steps){
-	uint8_t curpos, negative_dir = 0;
-	if(steps == 0) return 0;
-	// check whether motor is moving
-	if(Motor_active[num]){
-		ERR("moving\n");
-		return 0;
-	}
+uint8_t undervoltage_test(int thres){
 	int voltage = power_voltage();
-	if(voltage < MOTORS_VOLTAGE_THRES){
+	if(voltage < thres){
 		ERR("undervoltage!\n");
 		if(mode == LINE_MODE){
 			P("[ " STR_MOTORS_VOLTAGE " ", lastsendfun);
 			print_int(voltage, lastsendfun);
 			P(" ]\n", lastsendfun);
 		}
+		return 1;
+	}
+	return 0;
+}
+
+/**
+ * Move motor Motor_number to User_value steps
+ * return 0 if motor is still moving
+ */
+uint8_t move_motor(uint8_t num, int32_t steps){
+	uint8_t curpos, negative_dir = 0, N_active_in_group = 0;
+	if(steps == 0) return 0;
+	// check whether motor is moving
+/*	if(Motor_active[num]){
+		ERR("moving\n");
+		return 0;
+	}*/
+	// don't move motors if there's no power enough
+	if(undervoltage_test(MOTORS_VOLTAGE_THRES)) return 0;
+	if(num < 4){
+		for(curpos = 0; curpos < 4; curpos++)
+			if(Motor_active[curpos]) N_active_in_group++;
+	}else{
+		if(Motor_active[3] || Motor_active[4]) N_active_in_group = 1;
+	}
+	if(N_active_in_group){ // we can't move: there's any active motor in group
+		ERR("moving\n");
 		return 0;
 	}
 #ifdef EBUG
@@ -330,6 +350,11 @@ void process_stepper_motors(){
 			for(i = startno[j]; i < stopno[j]; i++)
 				if(Motor_active[i]) is_active = 1;
 			if(!is_active) continue; // don't generate clock pulses when there's no moving motors
+			if(undervoltage_test(MOTORS_VOLTAGE_ALERT)){ // UNDERVOLTAGE! Stop all active motors
+				for(i = 0; i < 5; i++)
+					if(Motor_active[i]) stop_motor(i);
+				return;
+			}
 			gpio_toggle(ports[j], pins[j]); // change clock state
 			if(!gpio_get(ports[j], pins[j])){ // negative pulse - omit this half-step
 				continue;

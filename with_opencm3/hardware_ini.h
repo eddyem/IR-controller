@@ -97,8 +97,10 @@ void ADC_calibrate_and_start();
 #define MOTOR_TIM1_PIN		(GPIO6)
 #define MOTOR_TIM2_PORT		(GPIOD)
 #define MOTOR_TIM2_PIN		(GPIO15)
-// don't even try to move motor if motors' voltage less than 9.5V
-#define MOTORS_VOLTAGE_THRES  (950)
+// don't even try to move motor if motors' voltage less than 9.0V
+#define MOTORS_VOLTAGE_THRES  (900)
+// stop all motors if voltage less than 7.5V
+#define MOTORS_VOLTAGE_ALERT  (750)
 
 /*
  * One Wire interface
