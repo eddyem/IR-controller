@@ -1,0 +1,115 @@
+Cmp-Mod V01 Created by CvPcb (2013-feb-26)-stable date = Пн 02 мар 2015 09:13:14
+
+BeginCmp
+TimeStamp = /54F40B18;
+Reference = D1;
+ValeurCmp = LED;
+IdModule  = LED-3MM;
+EndCmp
+
+BeginCmp
+TimeStamp = /54F40B25;
+Reference = D2;
+ValeurCmp = LED;
+IdModule  = LED-3MM;
+EndCmp
+
+BeginCmp
+TimeStamp = /54F40BFF;
+Reference = D3;
+ValeurCmp = LED;
+IdModule  = LED-3MM;
+EndCmp
+
+BeginCmp
+TimeStamp = /54F40BD8;
+Reference = D4;
+ValeurCmp = LED;
+IdModule  = LED-3MM;
+EndCmp
+
+BeginCmp
+TimeStamp = /54F40BDE;
+Reference = D5;
+ValeurCmp = LED;
+IdModule  = LED-3MM;
+EndCmp
+
+BeginCmp
+TimeStamp = /54F40D0F;
+Reference = HOLE1;
+ValeurCmp = HOLE;
+IdModule  = hole_3mm;
+EndCmp
+
+BeginCmp
+TimeStamp = /54F40D1C;
+Reference = HOLE2;
+ValeurCmp = HOLE;
+IdModule  = hole_3mm;
+EndCmp
+
+BeginCmp
+TimeStamp = /54F40D22;
+Reference = HOLE3;
+ValeurCmp = HOLE;
+IdModule  = hole_3mm;
+EndCmp
+
+BeginCmp
+TimeStamp = /54F40D28;
+Reference = HOLE4;
+ValeurCmp = HOLE;
+IdModule  = hole_3mm;
+EndCmp
+
+BeginCmp
+TimeStamp = /54F40B2D;
+Reference = K1;
+ValeurCmp = CONN_3;
+IdModule  = PIN_ARRAY_3X1;
+EndCmp
+
+BeginCmp
+TimeStamp = /54F40BE4;
+Reference = K2;
+ValeurCmp = CONN_4;
+IdModule  = PIN_ARRAY_4x1;
+EndCmp
+
+BeginCmp
+TimeStamp = /54F40B6D;
+Reference = R1;
+ValeurCmp = 330;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /54F40B3C;
+Reference = R2;
+ValeurCmp = 330;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /54F40C05;
+Reference = R3;
+ValeurCmp = 2.2k;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /54F40BF0;
+Reference = R4;
+ValeurCmp = 2.2k;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /54F40BEA;
+Reference = R5;
+ValeurCmp = 6.8k;
+IdModule  = SM1206;
+EndCmp
+
+EndListe

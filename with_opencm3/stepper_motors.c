@@ -222,7 +222,7 @@ uint8_t move_motor(uint8_t num, int32_t steps){
 	}*/
 	// don't move motors if there's no power enough
 	if(undervoltage_test(MOTORS_VOLTAGE_THRES)) return 0;
-	if(num < 4){
+	if(num < 3){
 		for(curpos = 0; curpos < 4; curpos++)
 			if(Motor_active[curpos]) N_active_in_group++;
 	}else{
