@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Ср 04 фев 2015 15:06:53
+EESchema Schematic File Version 2  date Чт 02 апр 2015 10:40:58
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -41,7 +41,7 @@ $Descr A3 16535 11693
 encoding utf-8
 Sheet 3 12
 Title "MCU module on STM32F103"
-Date "4 feb 2015"
+Date "2 apr 2015"
 Rev ""
 Comp "SAO RAS"
 Comment1 ""
@@ -669,9 +669,9 @@ Hall[0..9]
 Text Label 1600 7200 0    61   ~ 0
 Hall[0..9]
 NoConn ~ 12600 4100
-Text Label 11400 4100 1    61   ~ 0
+Text Label 11800 4100 1    61   ~ 0
 Tur3_1
-Text Label 11300 4100 1    61   ~ 0
+Text Label 11400 4100 1    61   ~ 0
 Tur3_2
 Text Label 12500 4100 1    61   ~ 0
 Tur1_0
@@ -680,14 +680,12 @@ Tur1_1
 Text Label 12300 4100 1    61   ~ 0
 Tur1_2
 Text Label 12200 4100 1    61   ~ 0
-Tur1_3
-Text Label 12100 4100 1    61   ~ 0
 Tur2_0
-Text Label 12000 4100 1    61   ~ 0
+Text Label 12100 4100 1    61   ~ 0
 Tur2_1
-Text Label 11900 4100 1    61   ~ 0
+Text Label 12000 4100 1    61   ~ 0
 Tur2_2
-Text Label 11800 4100 1    61   ~ 0
+Text Label 11900 4100 1    61   ~ 0
 Tur3_0
 Entry Wire Line
 	1800 7200 1900 7300
@@ -696,13 +694,13 @@ Entry Wire Line
 Entry Wire Line
 	1800 7500 1900 7600
 Entry Wire Line
-	1800 7650 1900 7750
+	1800 7800 1900 7900
 Entry Wire Line
 	1800 7950 1900 8050
 Entry Wire Line
 	1800 8100 1900 8200
 Entry Wire Line
-	1800 8250 1900 8350
+	1800 8400 1900 8500
 Entry Wire Line
 	1800 8550 1900 8650
 Entry Wire Line
@@ -715,13 +713,13 @@ Text Label 2000 7450 0    61   ~ 0
 Hall1
 Text Label 2000 7600 0    61   ~ 0
 Hall2
-Text Label 2000 7750 0    61   ~ 0
+Text Label 2000 7900 0    61   ~ 0
 Hall3
 Text Label 2000 8050 0    61   ~ 0
 Hall4
 Text Label 2000 8200 0    61   ~ 0
 Hall5
-Text Label 2000 8350 0    61   ~ 0
+Text Label 2000 8500 0    61   ~ 0
 Hall6
 Text Label 2000 8650 0    61   ~ 0
 Hall7
@@ -735,19 +733,17 @@ Text Label 2500 7450 0    61   ~ 0
 Tur1_1
 Text Label 2500 7600 0    61   ~ 0
 Tur1_2
-Text Label 2500 7750 0    61   ~ 0
-Tur1_3
-Text Label 2500 8050 0    61   ~ 0
+Text Label 2500 7900 0    61   ~ 0
 Tur2_0
-Text Label 2500 8200 0    61   ~ 0
+Text Label 2500 8050 0    61   ~ 0
 Tur2_1
-Text Label 2500 8350 0    61   ~ 0
+Text Label 2500 8200 0    61   ~ 0
 Tur2_2
-Text Label 2500 8650 0    61   ~ 0
+Text Label 2500 8500 0    61   ~ 0
 Tur3_0
-Text Label 2500 8800 0    61   ~ 0
+Text Label 2500 8650 0    61   ~ 0
 Tur3_1
-Text Label 2500 8950 0    61   ~ 0
+Text Label 2500 8800 0    61   ~ 0
 Tur3_2
 $Comp
 L R0603 R13
@@ -1667,13 +1663,13 @@ Wire Wire Line
 Wire Wire Line
 	1900 7600 2500 7600
 Wire Wire Line
-	1900 7750 2500 7750
+	1900 7900 2500 7900
 Wire Wire Line
 	1900 8050 2500 8050
 Wire Wire Line
 	1900 8200 2500 8200
 Wire Wire Line
-	1900 8350 2500 8350
+	1900 8500 2500 8500
 Wire Wire Line
 	1900 8650 2500 8650
 Wire Wire Line
@@ -2009,4 +2005,8 @@ Text Label 1800 2200 0    60   ~ 0
 U10_ADC
 Text Label 8300 7600 2    60   ~ 0
 U10_ADC
+Text Label 2500 8950 0    61   ~ 0
+Tur3_3
+Text Label 11300 4100 1    61   ~ 0
+Tur3_3
 $EndSCHEMATC

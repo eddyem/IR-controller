@@ -80,6 +80,8 @@ void UART_init(uint32_t UART){
 			rccgpio = RCC_GPIOA;   // RCC timing of GPIO pin (for output)
 			TX_buffer[1].end = 0;  // reset counters
 			TX_buffer[1].start = 0;
+			RX_buffer[1].end = 0;
+			RX_buffer[1].start = 0;
 			// output pin setup
 			gpioport = GPIO_BANK_USART2_TX;
 			gpiopin  = GPIO_USART2_TX;
@@ -90,6 +92,8 @@ void UART_init(uint32_t UART){
 			rccgpio = RCC_GPIOB;
 			TX_buffer[2].end = 0;
 			TX_buffer[2].start = 0;
+			RX_buffer[2].end = 0;
+			RX_buffer[2].start = 0;
 			gpioport = GPIO_BANK_USART3_TX;
 			gpiopin  = GPIO_USART3_TX;
 		break;
@@ -100,6 +104,8 @@ void UART_init(uint32_t UART){
 			rccgpio = RCC_GPIOA;
 			TX_buffer[0].end = 0;
 			TX_buffer[0].start = 0;
+			RX_buffer[0].end = 0;
+			RX_buffer[0].start = 0;
 			gpioport = GPIO_BANK_USART1_TX;
 			gpiopin  = GPIO_USART1_TX;
 	}
@@ -145,7 +151,7 @@ void UART_isr(uint32_t UART){
 	if((USART_CR1(UART) & USART_CR1_TXEIE) && (USART_SR(UART) & USART_SR_TXE)){
 		switch(UART){
 			case USART1:
-			bufidx = 0;
+				bufidx = 0;
 			break;
 			case USART2:
 				bufidx = 1;
@@ -161,8 +167,9 @@ void UART_isr(uint32_t UART){
 		if(bufidx != curbuff->end){ // there's data in buffer
 			// Put data into the transmit register
 			usart_send(UART, curbuff->buf[bufidx]);
-			if(++(curbuff->start) == UART_TX_DATA_SIZE) // bufidx > endidx && got end of buffer
+			if(++(curbuff->start) == UART_TX_DATA_SIZE){ // reload start
 				curbuff->start = 0;
+			}
 		}else{ // Disable the TXE interrupt, it's no longer needed
 			USART_CR1(UART) &= ~USART_CR1_TXEIE;
 			// empty indexes

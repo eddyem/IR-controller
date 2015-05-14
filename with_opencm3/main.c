@@ -152,7 +152,8 @@ int main(){
 
 	usb_disconnect(); // turn off USB while initializing all
 
-	// init USART1
+	// init USART3 (master) & USART1 (slave)
+	UART_init(USART3);
 	UART_init(USART1);
 
 	// USB
@@ -189,7 +190,8 @@ int main(){
 			usbdatalen = parce_incoming_buf(usbdatabuf, usbdatalen, usb_send);
 			oldusbdatalen = usbdatalen;
 		}
-		check_and_parce_UART(USART1); // also check data in UART buffers
+		check_and_parce_UART(USART3); // check data in master UART buffers
+		check_and_parce_UART(USART1); // also check data in slave UART buffers
 		if(ad7794_on){
 			if(Timer != lastTRDread){ // run this not more than once in 1ms
 				lastTRDread = Timer;

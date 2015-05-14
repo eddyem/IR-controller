@@ -28,7 +28,7 @@
 #define TURRETS_PAUSE_US (50000)
 // max amount of steps to add to turret for moving to next position
 #define TURRETS_NEXT_POS_STEPS  (500)
-// (index/4) in accel_mults[] for started acceleration
+// (index*4) in accel_mults[] for started acceleration
 #define START_MOTORS_ACCEL_IDX_4 (63)
 
 #ifndef CONCAT

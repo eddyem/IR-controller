@@ -1,0 +1,80 @@
+eeschema (2013-feb-26)-stable  >> Creation date: Вт 29 апр 2014 11:02:43
+#Cmp ( order = Reference )
+| C1         0.1u        
+| C2         0.1u        
+| C3         0.1u        
+| C4         0.1u        
+| C5         10u         
+| C6         0.1u        
+| C7         10u         
+| C8         0.33u       
+| C9         0.1u        
+| C10        1u          
+| C11        1u          
+| C12        10u         
+| C13        100u        
+| JP1        VDD int     
+| JP2        VDD ext     
+| L1         BMB2A0300AN1
+| L2         BMB2A0300AN1
+| P1         контакт 1
+| P2         контакт 2А
+| P3         контакт 2Б
+| P4         MCU         
+| P5         12V         
+| P6         5V          
+| R1         10k         
+| R2         10k         
+| R3         47k         
+| R4         5.1k PREC!  
+| U1         ADG506A     
+| U2         ADG506A     
+| U3         ADG506A     
+| U4         AD7794/7795 
+| U5         LM1117-05   
+#End Cmp
+
+#Cmp ( order = Value )
+| 0.1u         C1        
+| 0.1u         C2        
+| 0.1u         C3        
+| 0.1u         C4        
+| 0.1u         C6        
+| 0.1u         C9        
+| 0.33u        C8        
+| 1u           C10       
+| 1u           C11       
+| 10u          C5        
+| 10u          C7        
+| 10u          C12       
+| 100u         C13       
+| VDD int      JP1       
+| VDD ext      JP2       
+| BMB2A0300AN1 L1        
+| BMB2A0300AN1 L2        
+| контакт 1 P1        
+| контакт 2А P2        
+| контакт 2Б P3        
+| MCU          P4        
+| 12V          P5        
+| 5V           P6        
+| 5.1k PREC!   R4        
+| 10k          R1        
+| 10k          R2        
+| 47k          R3        
+| ADG506A      U1        
+| ADG506A      U2        
+| ADG506A      U3        
+| AD7794/7795  U4        
+| LM1117-05    U5        
+#End Cmp
+
+#Global, Hierarchical Labels and PinSheets ( order = Alphab. ) count = 4
+
+> +12Vex                       Global              Loc /(X=265.430 mm, Y=106.680 mm)
+> DVDD                         Global              Loc /(X=262.890 mm, Y=154.940 mm)
+> GND                          Global              Loc /(X=266.700 mm, Y=115.570 mm)
+> GND                          Global              Loc /(X=265.430 mm, Y=162.560 mm)
+#End labels
+
+#End List

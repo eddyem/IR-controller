@@ -1,0 +1,171 @@
+Cmp-Mod V01 Created by CvPcb (2013-feb-26)-stable date = Сб 27 дек 2014 18:49:59
+
+BeginCmp
+TimeStamp = /53576FC3;
+Reference = C8;
+ValeurCmp = 0.33u;
+IdModule  = SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53576FB6;
+Reference = C9;
+ValeurCmp = 0.1u;
+IdModule  = SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /5357821E;
+Reference = C10;
+ValeurCmp = 1u;
+IdModule  = SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /5357750C;
+Reference = C12;
+ValeurCmp = 47u;
+IdModule  = SM1206POL;
+EndCmp
+
+BeginCmp
+TimeStamp = /54759E36;
+Reference = DA1;
+ValeurCmp = NX3L4051-HX;
+IdModule  = HXQFN16;
+EndCmp
+
+BeginCmp
+TimeStamp = /5475A2C1;
+Reference = DA2;
+ValeurCmp = NX3L4051-HX;
+IdModule  = HXQFN16;
+EndCmp
+
+BeginCmp
+TimeStamp = /5475A2C7;
+Reference = DA3;
+ValeurCmp = NX3L4051-HX;
+IdModule  = HXQFN16;
+EndCmp
+
+BeginCmp
+TimeStamp = /53577523;
+Reference = L1;
+ValeurCmp = BMB2A0300AN1;
+IdModule  = SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53579853;
+Reference = P1;
+ValeurCmp = контакт 1;
+IdModule  = SIL-8;
+EndCmp
+
+BeginCmp
+TimeStamp = /5475974D;
+Reference = P2;
+ValeurCmp = контакт 2a;
+IdModule  = SIL-8;
+EndCmp
+
+BeginCmp
+TimeStamp = /5475975B;
+Reference = P3;
+ValeurCmp = контакт 2б;
+IdModule  = SIL-8;
+EndCmp
+
+BeginCmp
+TimeStamp = /5357BA72;
+Reference = P4;
+ValeurCmp = MCU;
+IdModule  = SIL-8;
+EndCmp
+
+BeginCmp
+TimeStamp = /5357ABB4;
+Reference = P6;
+ValeurCmp = 5V;
+IdModule  = SIL-2;
+EndCmp
+
+BeginCmp
+TimeStamp = /53579396;
+Reference = R1;
+ValeurCmp = 10k;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /535793A8;
+Reference = R2;
+ValeurCmp = 10k;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /5357C8F8;
+Reference = R3;
+ValeurCmp = 47k;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /53562118;
+Reference = R4;
+ValeurCmp = 1k 0.1% (RT0805BRB071KL);
+IdModule  = SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /547C0DD9;
+Reference = R5;
+ValeurCmp = 1k 0.1% (RT0805BRB071KL);
+IdModule  = SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /547C0DE4;
+Reference = R6;
+ValeurCmp = 1k 0.1% (RT0805BRB071KL);
+IdModule  = SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /547C0DEA;
+Reference = R7;
+ValeurCmp = 1k 0.1% (RT0805BRB071KL);
+IdModule  = SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /547C0DF0;
+Reference = R8;
+ValeurCmp = 1k 0.1% (RT0805BRB071KL);
+IdModule  = SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /524D62C1;
+Reference = U4;
+ValeurCmp = AD7794/7795;
+IdModule  = SSOP24;
+EndCmp
+
+BeginCmp
+TimeStamp = /535787B7;
+Reference = U5;
+ValeurCmp = LM1117-33;
+IdModule  = SOT223;
+EndCmp
+
+BeginCmp
+TimeStamp = /549EDA1E;
+Reference = X1;
+ValeurCmp = GND_CONNECTOR;
+IdModule  = GND_connector;
+EndCmp
+
+EndListe

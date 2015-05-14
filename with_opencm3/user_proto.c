@@ -292,22 +292,27 @@ int parce_incoming_buf(char *buf, int len, sendfun s){
 			return 0;
 		}
 	}else if(mode == LINE_MODE){ // text mode: check for "]\n" presence
-		uint8_t bad_cmd = 1;
+		uint8_t bad_cmd = 1, found_end = 0;
 		if(buf[0] == '['){
-		for(j = 1; j < len; j++){
-			if(buf[j] != '\n') continue; // search end of line
-			else{
-				if(buf[j-1] == ']'){
-					bad_cmd = 0;
-					len = j; buf[j] = 0; // truncate buffer to only one command
-
-					break;
+			for(j = 1; j < len; j++){
+				if(buf[j] == ']' && found_end == 0){
+					found_end = j; // store position of command's end
+					continue;
 				}
+				if(buf[j] != '\n' && buf[j] != '\r') continue; // search end of line
 				else{
-					return 0; // end of line without closing bracket
+					if(found_end){ // open brace have a pair
+						bad_cmd = 0;
+						len = found_end+1; // save "]" in buffer for correct integer values reading
+						buf[len] = 0; // truncate buffer to only one command
+						break;
+					}
+					else{
+						return 0; // end of line without closing bracket
+					}
 				}
 			}
-		}} else{
+		}else{
 			return 0;
 		}
 		if(bad_cmd){
@@ -322,8 +327,8 @@ int parce_incoming_buf(char *buf, int len, sendfun s){
 			I = stepper_proc;
 			READINT();
 		}else switch (command){
-			case '[': // line mode - do nothing, this is start symbol
-				//mode = LINE_MODE;
+			case '[':
+			case ']':
 			break;
 			case '+': // user check number value & confirm it's right
 				if(mode != BYTE_MODE) return 0; // bad command - no echo
@@ -509,7 +514,7 @@ int parce_incoming_buf(char *buf, int len, sendfun s){
 				gpio_clear(MOTOR_EN_PORT, MOTOR_EN_MASK);
 			break;
 */
-			case '\n': // show newline, space and tab as is
+			case '\n': // show newline, cr, space and tab as is
 			case '\r':
 			case ' ':
 			case '\t':
@@ -520,9 +525,12 @@ int parce_incoming_buf(char *buf, int len, sendfun s){
 		if(mode == BYTE_MODE) s(command); // echo readed byte in byte mode
 	}
 	if(mode == LINE_MODE){ // process command which needs for user value
-		if(I && Uval_ready == UVAL_ENTERED){
+		if(I){
+			if(Uval_ready == UVAL_ENTERED)
+				do_echo = I(User_value, s);
+			else
+				do_echo = 0; // if entered value is wrong, don't echo command
 			Uval_ready = UVAL_BAD; // clear Uval_ready
-			do_echo = I(User_value, s);
 			I = NULL;
 		}
 	}
@@ -589,8 +597,9 @@ int read_int(char *buf, int cnt){
 		User_value = User_value * 10 + (int32_t)(chr - '0');
 		enteredDigits++;
 	}
-	if(Uval_ready == UVAL_ENTERED) // reading has met an non-numeric character
+	if(Uval_ready == UVAL_ENTERED){ // reading has met an non-numeric character
 		User_value *= sign;
+}
 	return readed;
 }
 

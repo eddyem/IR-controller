@@ -82,7 +82,7 @@
       (plotinvisibletext false)
       (padsonsilk true)
       (subtractmaskfromsilk false)
-      (outputformat 1)
+      (outputformat 2)
       (mirror false)
       (drillshape 0)
       (scaleselection 1)
