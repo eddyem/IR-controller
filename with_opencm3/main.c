@@ -24,11 +24,19 @@
 #include "cdcacm.h"
 #include "uart.h"
 #include "spi.h"
+//#include "stepper_motors.h"
+
+#include "sync.h"
+#include "flash.h"
+#include "AD7794.h"
+#include "onewire.h"
 #include "stepper_motors.h"
+#include "powerhw.h"
 
 volatile uint32_t Timer = 0, tOVRFL = 0; // global timer (milliseconds), overflow counter
 usbd_device *usbd_dev;
 
+uint8_t OW_scan = 1;
 uint8_t ADC_monitoring = 0; // ==1 to make continuous monitoring
 
 uint32_t ad7794_on = 0;
@@ -135,9 +143,30 @@ void AD7794_init(){
 	}
 }
 
+void scan_onewire(){
+	if(!OW_get_reset_status()){ // try to send read sequence if there wasn't any 1-wire devices
+		int i;
+		for(i = 0; i < OW_dev_amount; ++i)
+			OW_temperature[i] = ERR_TEMP_VAL;
+		OW_send_read_seq();
+		return;
+	}
+	if(OW_MEASUREMENTS_DONE()){
+		OW_CLEAR_DONE_FLAG();
+		OW_read_next_temp();
+	}
+	if(OW_DATA_READY()){
+		OW_CLEAR_READY_FLAG();
+		if(OW_current_num() == OW_dev_amount - 1)
+			OW_send_read_seq();
+		else
+			OW_read_next_temp();
+	}
+}
+
 int main(){
 	//int i;
-	uint32_t Shtr_blink_timer = 0, Old_timer = 0, lastTRDread = 0, lastTmon = 0;
+	uint32_t Shtr_blink_timer = 0, Old_timer = 0, lastTRDread = 0, lastTmon = 0, OW_timer = 0;
 	int oldusbdatalen = 0;
 	//SPI_read_status SPI_stat;
 
@@ -149,7 +178,6 @@ int main(){
 
 	// GPIO
 	GPIO_init();
-
 	usb_disconnect(); // turn off USB while initializing all
 
 	// init USART3 (master) & USART1 (slave)
@@ -166,7 +194,6 @@ int main(){
 	// SPI2 used for working with external ADC
 	switch_SPI(SPI2); // init SPI2
 	SPI_init();
-	init_ow_dmatimer();
 
 	// wait a little and then turn on USB pullup
 //	for (i = 0; i < 0x800000; i++)
@@ -182,6 +209,9 @@ int main(){
 	shutter_init();
 
 	read_stored_data(); // copy stored data into RAM
+
+	init_ow_dmatimer();
+	//OW_send_read_seq();
 
 	LED_STATUS_OK(); // All initialized - light up LED
 	while(1){
@@ -199,11 +229,10 @@ int main(){
 			}
 		}
 		OW_process(); // process 1-wire commands
-		if(OW_DATA_READY()){
-			OW_CLEAR_READY_FLAG();
-#ifdef EBUG
-			OW_printID(0, lastsendfun);
-#endif
+		// scan 1-wire each 1 second
+		if(OW_scan && (Timer - OW_timer > 999 || Timer < OW_timer)){
+			OW_timer = Timer;
+			scan_onewire();
 		}
 		process_stepper_motors(); // check flags of motors' timers
 		process_shutter(); // shutter state machine
@@ -221,12 +250,6 @@ int main(){
 			if(Shutter_State == SHUTTER_NOTREADY){
 				shutter_init();
 			}
-//OW_fill_ID(0);
-			//gpio_toggle(GPIOC, GPIO12); // toggle LED
-			//gpio_toggle(GPIO_BANK_SPI2_MOSI, GPIO_SPI2_MOSI);
-			//gpio_toggle(GPIO_BANK_SPI2_SCK, GPIO_SPI2_SCK);
-		//	if(!ad7794_on) AD7794_init(); // try to init ADC if it doesn't work
-			//print_int(Timer/1000, usb_send);
 		}else if(Timer < Old_timer){ // Timer overflow
 			Old_timer = 0;
 			tOVRFL++; // this is an overflow counter - for workinkg in long-long time interval

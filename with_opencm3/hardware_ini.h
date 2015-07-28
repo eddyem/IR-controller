@@ -34,16 +34,6 @@
  */
 
 
-#define TIM2_DMABUFF_SIZE 128
-// 1-wire zero-state lengths (in us minus 1)
-#define OW_1           (9)
-#define OW_0           (69)
-#define OW_READ1       (14)
-#define OW_BIT         (79)
-#define OW_RESET       (499)
-#define OW_RESET_TIME  (999)
-#define OW_PRESENT     (549)
-
 extern volatile uint16_t ADC_value[]; // ADC DMA value
 
 #define TRD_NO			(8) // number of TRD devices
@@ -59,6 +49,8 @@ void GPIO_init();
 void SysTick_init();
 void ADC_init();
 void ADC_calibrate_and_start();
+
+void adc_dma_on();
 
 /*
  * USB interface
@@ -104,22 +96,27 @@ void ADC_calibrate_and_start();
 
 /*
  * One Wire interface
- */
+ *
 // In case of using other USART for 1-wire port, make corresponding change
 // and redefine pins in OW_Init
 #define OW_USART_X			USART2
 #define OW_RX_PORT			GPIO_BANK_USART2_RX
 #define OW_RX_PIN			GPIO_USART2_RX
-
+*/
 /*
  * Shutter defines
  */
 // external signals for shutter opening: PB3 (SPI1_SCK) - from camera electronics, PB4 (SPI1_MISO) - from manual switch
 // both are pull-up inputs
-#define SHUTTER_EXT_PORT	(GPIOB)
-#define SHUTTER_CAM_PIN		(GPIO3)
+//#define SHUTTER_CAM_PORT	(GPIOB)
+//#define SHUTTER_CAM_PIN		(GPIO3)
+// As PB3 was burned, redefine CAM to EXT0 - PD10
+#define SHUTTER_CAM_PORT	(GPIOD)
+#define SHUTTER_CAM_PIN		(GPIO10)
+#define SHUTTER_MAN_PORT	(GPIOB)
 #define SHUTTER_MAN_PIN		(GPIO4)
 // shutter feedback ==0 when opened, PB5 (SPI1_MOSI)
+#define SHUTTER_FBSW_PORT	(GPIOB)
 #define SHUTTER_FBSW_PIN	(GPIO5)
 // LED status open-drain output: PB8 (CAN RX)
 #define LED_STATUS_PORT		(GPIOB)
@@ -153,15 +150,4 @@ int shutter_voltage();
 int power_voltage();
 int TRD_value(uint8_t num);
 
-void init_ow_dmatimer();
-void run_dmatimer();
-extern uint8_t ow_done;
-#define OW_READY()  (ow_done)
-void ow_dma_on();
-void adc_dma_on();
-uint8_t OW_add_byte(uint8_t ow_byte, uint8_t Nbits, uint8_t ini);
-uint8_t OW_add_read_seq(uint8_t Nbytes);
-void read_from_OWbuf(uint8_t start_idx, uint8_t N, uint8_t *outbuf);
-void ow_reset();
-uint8_t OW_get_reset_status();
 #endif // __HARDWARE_INI_H__

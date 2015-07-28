@@ -22,6 +22,7 @@
 #include "user_proto.h"
 #include "main.h"
 #include "uart.h"
+#include "sync.h"
 
 // Buffer for USB Tx
 static uint8_t USB_Tx_Buffer[USB_TX_DATA_SIZE];

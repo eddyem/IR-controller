@@ -22,6 +22,7 @@
 #include "main.h"
 #include "uart.h"
 #include "cdcacm.h"
+#include "hardware_ini.h"
 
 // Buffers for Tx
 static UART_buff TX_buffer[3]; // Tx buffers for all three ports
@@ -74,7 +75,7 @@ void UART_setspeed(uint32_t UART, struct usb_cdc_line_coding *lc){
 void UART_init(uint32_t UART){
 	uint32_t irq, rcc, rccgpio, gpioport, gpiopin;
 	switch(UART){
-		case USART2: // 1-wire
+/*		case USART2: // 1-wire
 			irq = NVIC_USART2_IRQ; // interrupt for given USART
 			rcc = RCC_USART2;      // RCC timing of USART
 			rccgpio = RCC_GPIOA;   // RCC timing of GPIO pin (for output)
@@ -85,7 +86,7 @@ void UART_init(uint32_t UART){
 			// output pin setup
 			gpioport = GPIO_BANK_USART2_TX;
 			gpiopin  = GPIO_USART2_TX;
-		break;
+		break;*/
 		case USART3: // without remapping
 			irq = NVIC_USART3_IRQ;
 			rcc = RCC_USART3;
@@ -114,17 +115,17 @@ void UART_init(uint32_t UART){
 	rcc_periph_clock_enable(rcc);      // USART
 	rcc_periph_clock_enable(rccgpio);  // GPIO pins
 	// enable output pin
-	if(UART == OW_USART_X){ // one wire
+/*	if(UART == OW_USART_X){ // one wire
 		// TX: open-drain output
 		gpio_set_mode(gpioport, GPIO_MODE_OUTPUT_50_MHZ,
 					GPIO_CNF_OUTPUT_ALTFN_OPENDRAIN, gpiopin);
 		// RX: floating input
 		gpio_set_mode(OW_RX_PORT, GPIO_MODE_INPUT,
 					GPIO_CNF_INPUT_FLOAT, OW_RX_PIN);
-	}else{
+	}else{*/
 		gpio_set_mode(gpioport, GPIO_MODE_OUTPUT_50_MHZ,
 					GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, gpiopin);
-	}
+	//}
 	// enable IRQ
 	nvic_enable_irq(irq);
 	UART_setspeed(UART, NULL);
@@ -181,10 +182,10 @@ void UART_isr(uint32_t UART){
 // particular interrupt handlers
 void usart1_isr(){
 	UART_isr(USART1);
-}
+}/*
 void usart2_isr(){
 	UART_isr(USART2);
-}
+}*/
 void usart3_isr(){
 	UART_isr(USART3);
 }

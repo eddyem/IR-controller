@@ -36,16 +36,11 @@
 #include <libopencm3/stm32/adc.h>
 #include <libopencm3/stm32/dma.h>
 #include <libopencm3/stm32/spi.h>
+#include <libopencm3/stm32/timer.h>
+
+#include "user_proto.h"
 
 #define ADC_CHANNELS_NUMBER    (10)
-
-#include "sync.h" // mutexes
-#include "flash.h"
-#include "user_proto.h"
-#include "AD7794.h"
-#include "onewire.h"
-#include "stepper_motors.h"
-#include "powerhw.h"
 
 #define _U_    __attribute__((__unused__))
 #define  U8(x)  ((uint8_t)  x)
@@ -56,6 +51,7 @@ extern uint32_t ad7794_values[]; // array with ADC data
 extern uint8_t doubleconv; // single/double ADC conversion
 extern uint32_t ad7794_on; // ==1 after AD7794 initialisation
 extern uint8_t ADC_monitoring; // ==1 to make continuous monitoring
+extern uint8_t OW_scan;
 void AD7794_init();
 
 extern volatile uint32_t Timer; // global timer (milliseconds)

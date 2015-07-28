@@ -18,9 +18,10 @@
  */
 #include "onewire.h"
 #include "user_proto.h"
+#include "hardware_ini.h"
+#include "flash.h"
 
-OW_ID id_array[OW_MAX_NUM]; // 1-wire devices ID buffer (not more than eight)
-uint8_t dev_amount = 0;   // amount of 1-wire devices
+//OW_ID id_array[OW_MAX_NUM]; // 1-wire devices ID buffer (not more than eight)
 
 // states of 1-wire processing queue
 typedef enum{
@@ -29,34 +30,224 @@ typedef enum{
 	OW_SEND_STATE,   // send data
 	OW_READ_STATE,   // wait for reading
 } OW_States;
+static volatile OW_States OW_State = OW_OFF_STATE; // 1-wire state, 0-not runned
 
-OW_States OW_State = OW_OFF_STATE; // 1-wire state, 0-not runned
-uint8_t OW_wait_bytes = 0;   // amount of bytes needed to read
-uint8_t OW_start_idx = 0;    // starting index to read from 1-wire buffer
-uint8_t *read_buf = NULL;    // buffer to read
+void (*ow_process_resdata)() = NULL;
+void wait_reading();
+
+static uint16_t tim2_buff[TIM2_DMABUFF_SIZE];
+static uint16_t tim2_inbuff[TIM2_DMABUFF_SIZE];
+int tum2buff_ctr = 0;
+uint8_t ow_done = 1;
+uint8_t ow_measurements_done = 0;
+
+/**
+ * this function sends bits of ow_byte (LSB first) to 1-wire line
+ * @param ow_byte - byte to convert
+ * @param Nbits   - number of bits to send
+ * @param ini     - 1 to zero counter
+ */
+uint8_t OW_add_byte(uint8_t ow_byte){
+	uint8_t i, byte;
+	for(i = 0; i < 8; i++){
+		if(ow_byte & 0x01){
+			byte = BIT_ONE_P;
+		}else{
+			byte = BIT_ZERO_P;
+		}
+		if(tum2buff_ctr == TIM2_DMABUFF_SIZE){
+			ERR("Tim2 buffer overflow");
+			return 0; // avoid buffer overflow
+		}
+		tim2_buff[tum2buff_ctr++] = byte;
+		ow_byte >>= 1;
+	}
+	return 1;
+}
+
+
+
+/**
+ * Adds Nbytes bytes 0xff  for reading sequence
+ */
+uint8_t OW_add_read_seq(uint8_t Nbytes){
+	uint8_t i;
+	if(Nbytes == 0) return 0;
+	Nbytes *= 8; // 8 bits for each byte
+	for(i = 0; i < Nbytes; i++){
+		if(tum2buff_ctr == TIM2_DMABUFF_SIZE){
+			ERR("Tim2 buffer overflow");
+			return 0;
+		}
+		tim2_buff[tum2buff_ctr++] = BIT_READ_P;
+	}
+	return 1;
+}
+
+/**
+ * Fill output buffer with data from 1-wire
+ * @param start_idx - index from which to start (byte number)
+ * @param N         - data length (in **bytes**)
+ * @outbuf          - where to place data
+ */
+void read_from_OWbuf(uint8_t start_idx, uint8_t N, uint8_t *outbuf){
+	start_idx *= 8;
+	uint8_t i, j, last = start_idx + N * 8, byte;
+	if(last >= TIM2_DMABUFF_SIZE) last = TIM2_DMABUFF_SIZE;
+	for(i = start_idx; i < last;){
+		byte = 0;
+		for(j = 0; j < 8; j++){
+			byte >>= 1;
+			if(tim2_inbuff[i++] < ONE_ZERO_BARRIER)
+				byte |= 0x80;
+		}
+		*outbuf++ = byte;
+	}
+}
+// there's a mistake in opencm3, so redefine this if needed (TIM_CCMR2_CC3S_IN_TI1 -> TIM_CCMR2_CC3S_IN_TI4)
+#ifndef TIM_CCMR2_CC3S_IN_TI4
+#define TIM_CCMR2_CC3S_IN_TI4		(2)
+#endif
+void init_ow_dmatimer(){ // tim2_ch4 - PA3, no remap
+	gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
+			GPIO_CNF_OUTPUT_ALTFN_OPENDRAIN, GPIO3);
+	rcc_periph_clock_enable(RCC_TIM2);
+	rcc_periph_clock_enable(RCC_DMA1);
+	timer_reset(TIM2);
+	// timers have frequency of 1MHz -- 1us for one step
+	// 36MHz of APB1
+	timer_set_mode(TIM2, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
+	// 72MHz div 72 = 1MHz
+	TIM2_PSC = 71;  // prescaler is (div - 1)
+	TIM2_CR1 = TIM_CR1_ARPE; // bufferize ARR/CCR
+	TIM2_ARR = RESET_LEN;
+	// PWM_OUT: TIM2_CH4; capture: TIM2_CH3
+	// PWM edge-aligned mode & enable preload for CCR4, CC3 takes input from TI4
+	TIM2_CCMR2 = TIM_CCMR2_OC4M_PWM1 | TIM_CCMR2_OC4PE | TIM_CCMR2_CC3S_IN_TI4;
+	TIM2_CCR4 = 0; // set output value to 1 by clearing CCR4
+	TIM2_EGR = TIM_EGR_UG; // update values of ARR & CCR4
+	// set low polarity for CC4, high for CC3 & enable CC4 out and CC3 in
+	TIM2_CCER = TIM_CCER_CC4P | TIM_CCER_CC4E | TIM_CCER_CC3E;
+
+	// TIM2_CH4 - DMA1, channel 7
+	dma_channel_reset(DMA1, DMA_CHANNEL7);
+	DMA1_CCR7 = DMA_CCR_DIR | DMA_CCR_MINC | DMA_CCR_PSIZE_16BIT | DMA_CCR_MSIZE_16BIT
+			| DMA_CCR_TEIE | DMA_CCR_TCIE | DMA_CCR_PL_HIGH;
+	nvic_enable_irq(NVIC_DMA1_CHANNEL7_IRQ); // enable dma1_channel7_isr
+	tum2buff_ctr = 0;
+	DBG("OW INITED\n");
+}
+
+void run_dmatimer(){
+	ow_done = 0;
+	TIM2_CR1 = 0;
+	adc_disable_dma(ADC1); // turn off DMA & ADC
+	adc_off(ADC1);
+	// TIM2_CH4 - DMA1, channel 7
+	DMA1_IFCR = DMA_ISR_TEIF7|DMA_ISR_HTIF7|DMA_ISR_TCIF7|DMA_ISR_GIF7 |
+		DMA_ISR_TEIF1|DMA_ISR_HTIF1|DMA_ISR_TCIF1|DMA_ISR_GIF1; // clear flags
+	DMA1_CCR7 &= ~DMA_CCR_EN; // disable (what if it's enabled?) to set address
+	DMA1_CPAR7 = (uint32_t) &(TIM_CCR4(TIM2)); // dma_set_peripheral_address(DMA1, DMA_CHANNEL7, (uint32_t) &(TIM_CCR4(TIM2)));
+	DMA1_CMAR7 = (uint32_t) &tim2_buff[1]; // dma_set_memory_address(DMA1, DMA_CHANNEL7, (uint32_t)tim2_buff);
+	DMA1_CNDTR7 = tum2buff_ctr-1;//dma_set_number_of_data(DMA1, DMA_CHANNEL7, tum2buff_ctr);
+	// TIM2_CH3 - DMA1, channel 1
+	dma_channel_reset(DMA1, DMA_CHANNEL1);
+	DMA1_CCR1 = DMA_CCR_MINC | DMA_CCR_PSIZE_16BIT | DMA_CCR_MSIZE_16BIT
+			| DMA_CCR_TEIE | DMA_CCR_TCIE | DMA_CCR_PL_HIGH;
+	DMA1_CPAR1 = (uint32_t) &(TIM_CCR3(TIM2)); //dma_set_peripheral_address(DMA1, DMA_CHANNEL1, (uint32_t) &(TIM_CCR3(TIM2)));
+	DMA1_CMAR1 = (uint32_t) tim2_inbuff; //dma_set_memory_address(DMA1, DMA_CHANNEL1, (uint32_t) tim2_inbuff);
+	DMA1_CNDTR1 = tum2buff_ctr; //dma_set_number_of_data(DMA1, DMA_CHANNEL1, tum2buff_ctr);
+	nvic_enable_irq(NVIC_DMA1_CHANNEL1_IRQ);
+
+	DMA1_CCR7 |= DMA_CCR_EN; //dma_enable_channel(DMA1, DMA_CHANNEL7);
+	DMA1_CCR1 |= DMA_CCR_EN; //dma_enable_channel(DMA1, DMA_CHANNEL1);
+
+	TIM2_SR = 0; // clear all flags
+	TIM2_ARR = BIT_LEN; // bit length
+	TIM2_CCR4 = tim2_buff[0]; // we should manually set first bit to avoid zero in tim2_inbuff[0]
+	TIM2_EGR = TIM_EGR_UG; // update value of ARR
+	TIM2_CR1 = TIM_CR1_ARPE; // bufferize ARR/CCR
+
+	TIM2_CR2 &= ~TIM_CR2_CCDS; // timer_set_dma_on_compare_event(TIM2);
+	TIM2_DIER = TIM_DIER_CC4DE | TIM_DIER_CC3DE; // enable DMA events
+	// set low polarity, enable cc out & enable input capture
+	TIM2_CR1 |= TIM_CR1_CEN; // run timer
+}
+
+uint16_t rstat = 0, lastcc3 = 3;
+void ow_reset(){
+	ow_done = 0;
+	rstat = 0;
+	TIM2_SR = 0; // clear all flags
+	TIM2_CR1 = 0;
+	TIM2_DIER = 0; // disable timer interrupts
+	TIM2_ARR = RESET_LEN; // set period to 1ms
+	TIM2_CCR4 = RESET_P; // zero pulse length
+	TIM2_EGR = TIM_EGR_UG; // update values of ARR & CCR4
+	TIM2_DIER = TIM_DIER_CC3IE;
+	TIM2_CR1 = TIM_CR1_OPM | TIM_CR1_CEN | TIM_CR1_UDIS; // we need only single pulse & run timer; disable UEV
+	TIM2_SR = 0; // clear update flag generated after timer's running
+	nvic_enable_irq(NVIC_TIM2_IRQ);
+}
+
+void tim2_isr(){
+	if(TIM2_SR & TIM_SR_UIF){ // update interrupt
+		TIM2_DIER = 0; // disable all timer interrupts
+		TIM2_CCR4 = 0; // set output value to 1
+		TIM2_EGR = TIM_EGR_UG; // update values of ARR & CCR4
+		nvic_disable_irq(NVIC_TIM2_IRQ);
+		TIM2_SR = 0; // clear flag
+		ow_done = 1;
+		rstat = lastcc3;
+	}
+	if(TIM2_SR & TIM_SR_CC3IF){ // we need this interrupt to store CCR3 value
+		lastcc3 = TIM2_CCR3;
+		TIM2_CR1 &= ~TIM_CR1_UDIS; // enable UEV
+		TIM2_SR = 0; // clear flag (we've manage TIM_SR_UIF before, so can simply do =0)
+		TIM2_DIER |= TIM_DIER_UIE; // Now allow also Update interrupts to turn off everything
+	}
+}
+
+/**
+ * DMA interrupt in 1-wire mode
+ */
+void dma1_channel1_isr(){
+	if(DMA1_ISR & DMA_ISR_TCIF1){
+		DMA1_IFCR = DMA_IFCR_CTCIF1;
+		TIM2_CR1 &= ~TIM_CR1_CEN;    // timer_disable_counter(TIM2);
+		DMA1_CCR1 &= ~DMA_CCR_EN; // disable DMA1 channel 1
+		nvic_disable_irq(NVIC_DMA1_CHANNEL1_IRQ);
+		ow_done = 1;
+	}else if(DMA1_ISR & DMA_ISR_TEIF1){
+		DMA1_IFCR = DMA_IFCR_CTEIF1;
+		DBG("DMA in transfer error\n");
+	}
+}
+
+void dma1_channel7_isr(){
+	if(DMA1_ISR & DMA_ISR_TCIF7){
+		DMA1_IFCR = DMA_IFCR_CTCIF7; // clear flag
+		DMA1_CCR7 &= ~DMA_CCR_EN; // disable DMA1 channel 7
+	}else if(DMA1_ISR & DMA_ISR_TEIF7){
+		DMA1_IFCR = DMA_IFCR_CTEIF7;
+		DBG("DMA out transfer error\n");
+	}
+}
+
+
+uint8_t OW_get_reset_status(){
+	if(rstat < RESET_BARRIER) return 0; // no devices
+	return 1;
+}
+
 
 uint8_t ow_data_ready = 0;   // flag of reading OK
 
-void OW_printID(uint8_t N, sendfun s){
-	void putc(uint8_t c){
-		if(c < 10)
-			s(c + '0');
-		else
-			s(c + 'a' - 10);
-	}
-	int i;
-	uint8_t *b = id_array[N].bytes;
-	s('0'); s('x'); // prefix 0x
-	for(i = 0; i < 8; i++){
-		putc(b[i] >> 4);
-		putc(b[i] & 0x0f);
-	}
-	s('\n');
-}
-
-uint8_t ow_was_reseting = 0;
-
+/**
+ * Process 1-wire commands depending on its state
+ */
 void OW_process(){
+	static uint8_t ow_was_reseting = 0;
 	switch(OW_State){
 		case OW_OFF_STATE:
 			return;
@@ -65,61 +256,82 @@ void OW_process(){
 			OW_State = OW_SEND_STATE;
 			ow_was_reseting = 1;
 			ow_reset();
-			//MSG("reset\n");
 		break;
 		case OW_SEND_STATE:
-			if(!OW_READY()) return; // reset in work
+			if(!ow_done) return; // reset in work
 			if(ow_was_reseting){
-				if(!OW_get_reset_status()){
-					BYTE_MSG("error: no 1-wire devices found\n");
+				if(rstat < RESET_BARRIER){
+					ERR("Error: no 1-wire devices found\n");
 					ow_was_reseting = 0;
-				//	OW_State = OW_OFF_STATE;
-				//	return;
+					OW_State = OW_OFF_STATE;
+					return;
 				}
 			}
 			ow_was_reseting = 0;
 			OW_State = OW_READ_STATE;
 			run_dmatimer(); // turn on data transfer
-			//MSG("send\n");
 		break;
 		case OW_READ_STATE:
-			if(!OW_READY()) return; // data isn't ready
+			if(!ow_done) return; // data isn't ready
 			OW_State = OW_OFF_STATE;
 			adc_dma_on(); // return DMA1_1 to ADC at end of data transmitting
-			if(read_buf){
-				read_from_OWbuf(OW_start_idx, OW_wait_bytes, read_buf);
-			}
+			adc_start_conversion_regular(ADC1);
+			adc_start_conversion_direct(ADC1);
+			if(ow_process_resdata)
+				ow_process_resdata();
 			ow_data_ready = 1;
-			//MSG("read\n");
 		break;
 	}
+}
+
+
+static uint8_t *read_buf = NULL;    // buffer for storing readed data
+/**
+ * fill ID buffer with readed data
+ */
+void fill_buff_with_data(){
+	ow_process_resdata = NULL;
+	if(!read_buf) return;
+	read_from_OWbuf(1, 8, read_buf);
+	int i, j;
+	LP("Readed ID: ");
+	for(i = 0; i < 8; ++i){
+		print_hex(&read_buf[i], 1, lastsendfun);
+		lastsendfun(' ');
+	}
+	lastsendfun('\n');
+	// now check stored ROMs
+	for(i = 0; i < OW_dev_amount; ++i){
+		uint8_t *ROM = OW_id_array[i];
+		for(j = 0; j < 8; j++)
+			if(ROM[j] != read_buf[j]) break;
+		if(j == 8){ // we found this cell
+			ERR("Such ID exists\n");
+			goto ret;
+		}
+	}
+	++OW_dev_amount;
+ret:
+	read_buf = NULL;
 }
 
 /**
  * fill Nth array with identificators
  */
 //uint8_t comtosend = 0;
-void OW_fill_ID(uint8_t N){
-	if(N >= OW_MAX_NUM){
-		BYTE_MSG("number too big\n");
+void OW_fill_next_ID(){
+	if(OW_dev_amount >= OW_MAX_NUM){
+		ERR("No memory left for new device\n");
 		return;
 	}
-	//OW_Send(1, (uint8_t*)"\xcc\x33", 2);
-	OW_Send(1, (uint8_t*)"\x19", 1);
-//	OW_Send(1, &comtosend, 1);
-//	comtosend++;
-	//OW_Send(1, (uint8_t*)"\xcc\xbe", 2);
-	OW_add_read_seq(9); // wait for 9 bytes
-	//OW_Send(0, (uint8_t*)"\xcc\x33\x10\x45\x94\x67\x7e\x8a", 8);
-	read_buf = id_array[N].bytes;
-	OW_wait_bytes = 8;
-	OW_start_idx = 0;
-/*
-	OW_Send(0, (uint8_t*)"\x99\xee", 2);
-	OW_wait_bytes = 2;
-	OW_start_idx = 0;
-	read_buf = id_array[N].bytes;
-*/
+	ow_data_ready = 0;
+	OW_State = OW_RESET_STATE;
+	OW_reset_buffer();
+	OW_add_byte(OW_READ_ROM);
+	OW_add_read_seq(8); // wait for 8 bytes
+	read_buf = OW_id_array[OW_dev_amount];
+	ow_process_resdata = fill_buff_with_data;
+	DBG("wait for ID\n");
 }
 
 /**
@@ -131,112 +343,132 @@ void OW_fill_ID(uint8_t N){
  * @return 1 if succeed, 0 if failure
  */
 uint8_t OW_Send(uint8_t sendReset, uint8_t *command, uint8_t cLen){
-	uint8_t f = 1;
 	ow_data_ready = 0;
 	// if reset needed - send RESET and check bus
 	if(sendReset)
 		OW_State = OW_RESET_STATE;
 	else
 		OW_State = OW_SEND_STATE;
+	OW_reset_buffer();
 	while(cLen-- > 0){
-		if(!OW_add_byte(*command, 8, f)) return 0;
-		command++;
-		f = 0;
+		if(!OW_add_byte(*command++)) return 0;
 	}
 	return 1;
 }
-
-
-#if 0
-
-
-void OW_ClearBuff(){
-	UART_buff *curbuff = get_uart_buffer(OW_USART_X);
-	curbuff->end = 0;
-}
-
-/*
- * Inverce conversion - read data (not more than 8 bits)
- */
-uint8_t OW_ConvertByte(uint8_t *bits, uint8_t L){
-	uint8_t ow_byte = 0, i, *st = bits;
-	if(L > 8) L = 8; // forget all other data
-	for(i = 0; i < L; i++, st++){
-		ow_byte = ow_byte >> 1; // prepare for next bit filling
-		if(*st == OW_1){
-			ow_byte |= 0x80; // MSB = 1
-		}
-	}
-	ow_byte >>= (8 - L);
-print_hex(bits, L, lastsendfun);
-lastsendfun(' ');
-print_hex(&ow_byte, 1, lastsendfun);
-newline(lastsendfun);
-	return ow_byte; // shift to the end: L could be != 8 ???
-}
-
-
-
-
-/*
- * 1-wire reset
- * Reset procedure: USART settings are 9600,8,n,1,
- *     send 0xf0 then check what we get
- *     if not 0xf0 line is busy.
- * Other operations work with next USART settings: 115200,8,n,1
- *
- * return 1 in case of 1-wire devices present; otherwise return 0
- */
-uint8_t OW_Reset(){
-	uint8_t ow_presence;
-	UART_buff *curbuff;
-	// change speed to 9600
-	usart_set_baudrate(OW_USART_X, 9600);
-	//USART_ClearFlag(OW_USART_X, USART_FLAG_TC);
-	fill_uart_buff(OW_USART_X, OW_RST); // send 1 byte data
-	// wait for end of transmission
-	while(!(USART_SR(OW_USART_X) & USART_SR_TC));
-	curbuff = get_uart_buffer(OW_USART_X);
-	if(!curbuff || !(curbuff->end)) return 0; // error reading
-	curbuff->end = 0; // zero counter
-	ow_presence = curbuff->buf[0];
-	// change speed back
-	usart_set_baudrate(OW_USART_X, 115200);
-	// if there is any device on bus, it will pull it, so we'll get not 0xf0
-	if(ow_presence != OW_RST){
-		return 1;
-	}
-	// we get 0xf0 -> there's nothing on the bus
-	return 0;
-}
-
-
 
 /**
- * Check USART IN buffer for ready & fill user buffer with data on success
- * @param buflen - expected buffer length
- * @param data - pointer for reading buffer (if reading needed must be at least buflen-readStart bytes)
- * @param readStart - first byte to read (starts from 0) or OW_NO_READ (not read)
- * @return 0 if buffer not ready; 1 if OK
+ * convert temperature from scratchpad
+ * in case of error return 200000 (ERR_TEMP_VAL)
+ * return value in 10th degrees centigrade
+ *
+ * 0 - themperature LSB
+ * 1 - themperature MSB (all higher bits are sign)
+ * 2 - T_H
+ * 3 - T_L
+ * 4 - B20: Configuration register (only bits 6/5 valid: 9..12 bits resolution); 0xff for S20
+ * 5 - 0xff (reserved)
+ * 6 - (reserved for B20); S20: COUNT_REMAIN (0x0c)
+ * 7 - COUNT PER DEGR (0x10)
+ * 8 - CRC
  */
-uint8_t OW_Get(uint8_t buflen, uint8_t *data, uint8_t readStart){
-	UART_buff *curbuff = get_uart_buffer(OW_USART_X);
-	uint8_t *buff = curbuff->buf;
-	if(curbuff->end < buflen/8) return 0;
-	while(buflen-- > 0){
-		if(readStart == 0){
-			*data++ = OW_ConvertByte(buff, 8);
-		}else{
-			if(readStart != OW_NO_READ){
-				readStart--;
-			}
-		}
-		buff += 8;
+int32_t gettemp(uint8_t *scratchpad){
+	// detect DS18S20
+	int32_t t = 0;
+	uint8_t l,m;
+	int8_t v;
+	if(scratchpad[7] == 0xff) // 0xff can be only if there's no such device or some other error
+		return ERR_TEMP_VAL;
+	m = scratchpad[1];
+	l = scratchpad[0];
+	if(scratchpad[4] == 0xff){ // DS18S20
+		v = l >> 1 | (m & 0x80); // take signum from MSB
+		t = ((int32_t)v) * 10L;
+		if(l&1) t += 5L; // decimal 0.5
+	}else{ // DS18B20
+		v = l>>4 | ((m & 7)<<4) | (m & 0x80);
+		t = ((int32_t)v) * 10L;
+		m = l & 0x0f; // add decimal
+		t += (int32_t)m; // t = v*10 + l*1.25 -> convert
+		if(m > 1) ++t; // 1->1, 2->3, 3->4, 4->5, 5->6
+		else if(m > 5) t += 2L; // 6->8, 7->9
 	}
-	curbuff->end = 0; // zero counter
-	return 1;
+	return t;
 }
 
+int32_t OW_temperature[OW_MAX_NUM];
+int8_t Ncur = -1;
+/**
+ * get temperature from buffer
+ */
+void convert_next_temp(){
+	uint8_t scratchpad[9], idx = Ncur;
+	ow_process_resdata = NULL;
+	if(OW_dev_amount < 2){
+		idx = 0;
+		read_from_OWbuf(2, 9, scratchpad);
+	}else{
+		read_from_OWbuf(10, 9, scratchpad);
+	}
+	OW_temperature[idx] = gettemp(scratchpad);
+#ifdef EBUG
+	if(mode == BYTE_MODE){
+		LP("T[");
+		print_int(idx, lastsendfun);
+		LP("] = ");
+		print_int(OW_temperature[idx], lastsendfun);
+		LP("/10 degrC\n");
+	}
+#endif
+}
+
+/**
+ * read next stored thermometer
+ */
+void OW_read_next_temp(){
+	ow_data_ready = 0;
+	OW_State = OW_RESET_STATE;
+	OW_reset_buffer();
+	int i;
+	if(OW_dev_amount < 2){
+		Ncur = -1;
+		OW_add_byte(OW_SKIP_ROM);
+	}else{
+		if(++Ncur >= OW_dev_amount) Ncur = 0;
+		OW_add_byte(OW_MATCH_ROM);
+		uint8_t *ROM = OW_id_array[Ncur];
+		for(i = 0; i < 8; ++i)
+			OW_add_byte(ROM[i]);
+	}
+	OW_add_byte(OW_READ_SCRATCHPAD);
+	OW_add_read_seq(9); // wait for 9 bytes - ROM
+	ow_process_resdata = convert_next_temp;
+}
+
+void wait_reading(){
+	uint8_t bt;
+	read_from_OWbuf(0, 1, &bt);
+	if(bt == 0xff){ // the conversion is done!
+		ow_measurements_done = 1;
+		ow_process_resdata = NULL;
+		DBG("Measurements done!\n");
+	}else{
+		OW_State = OW_SEND_STATE;
+		OW_reset_buffer();
+		ow_data_ready = 0;
+		OW_add_read_seq(1); // send read seq waiting for end of conversion
+	}
+}
+
+void OW_send_read_seq(){
+	ow_data_ready = 0;
+	ow_measurements_done = 0;
+	OW_State = OW_RESET_STATE;
+	OW_reset_buffer();
+	OW_add_byte(OW_SKIP_ROM);
+	OW_add_byte(OW_CONVERT_T);
+	OW_add_read_seq(1); // send read seq waiting for end of conversion
+	ow_process_resdata = wait_reading;
+}
 /*
  * scan 1-wire bus
  * WARNING! The procedure works in real-time, so it is VERY LONG
@@ -285,47 +517,3 @@ uint8_t OW_Scan(uint8_t *buf, uint8_t num){
 	return cnt_num;
 }*/
 
-uint8_t OW_Scan(uint8_t *buf, uint8_t num){
-	uint8_t flg, b[11], i;
-	flg = OW_Send(1, (uint8_t*)"\xcc\x33\xff\xff\xff\xff\xff\xff\xff\xff\xff", 11);
-	if(!flg) return 0;
-	OW_Wait_TX();
-	if(!OW_Get(11, b, 0)) return 0;
-	num += 2;
-	for(i = 2; i < num; i++) *buf++ = b[i];
-	return 1;
-}
-
-
-//OW_USART_X
-/*
-void OW_getTemp(){
-	uint8_t buf[9], i;
-	void printTBuf(){
-		uint8_t j;
-		OW_Send(0, (uint8_t*)"\xbe\xff\xff\xff\xff\xff\xff\xff\xff\xff", 10, buf, 9, 1);
-			for(j = 0; j != 9; j++)
-				printInt(&buf[j], 1);
-		newline();
-	}
-	// send broadcast message to start measurement
-	if(!OW_Send(1, (uint8_t*)"\xcc\x44", 2)) return;
-	Delay(1000);
-	// read values
-	if(dev_amount == 1){
-		if(OW_WriteCmd(OW_SKIP_ROM)) printTBuf();
-	}else{
-		for(i = 0; i < dev_amount; i++){
-			MSG("Device ", "ow");
-			USB_Send_Data(i + '0');
-			MSG(": ", 0);
-			if(OW_WriteCmd(OW_MATCH_ROM)){
-				OW_SendOnly(0, &ID_buf[i*8], 8);
-				printTBuf();
-			}
-		}
-	}
-}
-*/
-
-#endif

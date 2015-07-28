@@ -28,9 +28,10 @@
 
 // shorthand for prnt
 #define P(arg, s) prnt((uint8_t*)arg, s)
+#define LP(arg)   prnt((uint8_t*)arg, lastsendfun)
 // debug message - over USB
 #ifdef EBUG
-	#define DBG(a) do{if(mode == BYTE_MODE) prnt((uint8_t*)a, usb_send);}while(0)
+	#define DBG(a) do{if(mode == BYTE_MODE) prnt((uint8_t*)a, lastsendfun);}while(0)
 #else
 	#define DBG(a)
 #endif

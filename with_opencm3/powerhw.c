@@ -20,6 +20,8 @@
  */
 
 #include "main.h"
+#include "powerhw.h"
+
 // state of shutter - global variable to omit interface functions
 shutter_state Shutter_State = SHUTTER_NOTREADY;
 int8_t manual_pin_old_state = -1;
@@ -148,7 +150,7 @@ void shutter_test(){
 void shutter_ready(){
 	uint8_t test_err = 0;
 	//DBG("shtr ready\n");
-	uint32_t shtr_status = gpio_get(SHUTTER_EXT_PORT, SHUTTER_FBSW_PIN); // 0 when opened
+	uint32_t shtr_status = gpio_get(SHUTTER_FBSW_PORT, SHUTTER_FBSW_PIN); // 0 when opened
 	switch (Shutter_State){
 		case SHUTTER_CLOSED: // repeated pulse to check errors
 			if(shtr_status)
@@ -235,14 +237,9 @@ shutter_state shutter_init(){
 	// feedback: floating input
 	gpio_set_mode(SHUTTER_PORT, GPIO_MODE_INPUT,
 				GPIO_CNF_INPUT_FLOAT, SHUTTER_FB_PIN);
-	// Shutter control: input pull up
-//	gpio_set_mode(SHUTTER_EXT_PORT, GPIO_MODE_INPUT,
-//				GPIO_CNF_INPUT_FLOAT, SHUTTER_CAM_PIN | SHUTTER_MAN_PIN | SHUTTER_FBSW_PIN);
-//	gpio_set(SHUTTER_EXT_PORT, SHUTTER_CAM_PIN | SHUTTER_MAN_PIN | SHUTTER_FBSW_PIN); // turn on pull up
-	//DBG("shutter fb ready\n");
 	shutter_off();
-	camera_pin_old_state = (gpio_get(SHUTTER_EXT_PORT, SHUTTER_CAM_PIN)) ? 1 : 0;
-	manual_pin_old_state = (gpio_get(SHUTTER_EXT_PORT, SHUTTER_MAN_PIN)) ? 1 : 0;
+	camera_pin_old_state = (gpio_get(SHUTTER_CAM_PORT, SHUTTER_CAM_PIN)) ? 1 : 0;
+	manual_pin_old_state = (gpio_get(SHUTTER_MAN_PORT, SHUTTER_MAN_PIN)) ? 1 : 0;
 	//shutter_timer_fn = NULL;
 	shutter_wait_block(SHUTTER_OP_DELAY, shutter_test);
 	return SHUTTER_INITIALIZED; // we return this state in spite of the shutter isn't really initialized yet
@@ -260,7 +257,7 @@ void process_shutter(){
 	if(Shutter_State == SHUTTER_NOTREADY) return;
 
 	// test state of external control pins
-	cam_pin_state = (gpio_get(SHUTTER_EXT_PORT, SHUTTER_CAM_PIN)) ? 1 : 0;
+	cam_pin_state = (gpio_get(SHUTTER_CAM_PORT, SHUTTER_CAM_PIN)) ? 1 : 0;
 	if(camera_pin_old_state != cam_pin_state){ // camera signal changed or initialisation
 		camera_pin_old_state = cam_pin_state;
 		if(cam_pin_state){ // close
@@ -269,7 +266,7 @@ void process_shutter(){
 			ext_open = 1;
 		}
 	}
-	man_pin_state = (gpio_get(SHUTTER_EXT_PORT, SHUTTER_MAN_PIN)) ? 1 : 0;
+	man_pin_state = (gpio_get(SHUTTER_MAN_PORT, SHUTTER_MAN_PIN)) ? 1 : 0;
 	// to avoid opening shutter if user forget to set manual switch to "closed" position
 	// all operations with manual switch processed only in changing state of the switch
 	if(manual_pin_old_state != man_pin_state){ // user changed switch state -> open/close
@@ -377,7 +374,7 @@ void print_shutter_state(sendfun s){
 				P("not initialised or broken", s);
 	}
 	P(" (reed ", s);
-	if(gpio_get(SHUTTER_EXT_PORT, SHUTTER_FBSW_PIN)){ // closed
+	if(gpio_get(SHUTTER_FBSW_PORT, SHUTTER_FBSW_PIN)){ // closed
 		P("closed", s);
 	}else{//opened
 		P("opened", s);
@@ -387,9 +384,9 @@ void print_shutter_state(sendfun s){
 #ifdef EBUG
 	if(mode == BYTE_MODE){
 		P("MAN: ",s);
-		if(gpio_get(SHUTTER_EXT_PORT, SHUTTER_MAN_PIN)) P("not ",s);
+		if(gpio_get(SHUTTER_MAN_PORT, SHUTTER_MAN_PIN)) P("not ",s);
 		P("pressed, EXT: ",s);
-		if(gpio_get(SHUTTER_EXT_PORT, SHUTTER_CAM_PIN)) P("not ",s);
+		if(gpio_get(SHUTTER_CAM_PORT, SHUTTER_CAM_PIN)) P("not ",s);
 		P("pressed\n", s);
 	}
 #endif

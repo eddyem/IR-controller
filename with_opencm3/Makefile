@@ -5,7 +5,8 @@ BOOTSPEED	?= 115200
 # for example, if you have STM32F103VBT6, you should write:
 LDSCRIPT	= ld/stm32f103xB.ld
 LIBNAME		= opencm3_stm32f1
-DEFS		= -DSTM32F1 -DEBUG
+DEFS		= -DSTM32F1
+# -DEBUG
 
 OBJDIR = mk
 INDEPENDENT_HEADERS=

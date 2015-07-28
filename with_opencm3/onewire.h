@@ -24,51 +24,95 @@
 #include "main.h"
 #include "hardware_ini.h"
 
-// 1-wire status
-#define OW_OK			(1)
-#define OW_ERROR		(2)
-#define OW_NO_DEVICE	(3)
+// 20 bytes x 8bits
+#define TIM2_DMABUFF_SIZE 160
 
-#define OW_NO_READ		(0xff)
+// freq = 1MHz
+// ARR values: 1000 for reset, 100 for data in/out
+// CCR4 values: 500 for reset, 60 for sending 0 or reading, <15 for sending 1
+// CCR3 values: >550 if there's devices on line (on reset), >12 (typ.15) - read 0, < 12 (typ.1) - read 1
+#define RESET_LEN         ((uint16_t)1000)
+#define BIT_LEN           ((uint16_t)100)
+#define RESET_P           ((uint16_t)500)
+#define BIT_ONE_P         ((uint16_t)10)
+#define BIT_ZERO_P        ((uint16_t)60)
+#define BIT_READ_P        ((uint16_t)5)
+#define RESET_BARRIER     ((uint16_t)550)
+#define ONE_ZERO_BARRIER  ((uint16_t)10)
 
-#define OW_READ_SLOT	(uint8_t*)"0xff"
-
+#define ERR_TEMP_VAL  ((int32_t)200000)
+/*
 typedef struct{
 	uint8_t bytes[8];
 } OW_ID;
-
+*/
 #define OW_MAX_NUM 8
 
+//extern OW_ID id_array[];
+
+void init_ow_dmatimer();
+void run_dmatimer();
+extern uint8_t ow_done;
+#define OW_READY()  (ow_done)
+
+void ow_dma_on();
+uint8_t OW_add_byte(uint8_t ow_byte);
+uint8_t OW_add_read_seq(uint8_t Nbytes);
+void read_from_OWbuf(uint8_t start_idx, uint8_t N, uint8_t *outbuf);
+void ow_reset();
+uint8_t OW_get_reset_status();
+
+extern int tum2buff_ctr;
+#define OW_reset_buffer()   do{tum2buff_ctr = 0;}while(0)
+
 extern uint8_t ow_data_ready;
+extern uint8_t ow_measurements_done;
 #define OW_DATA_READY()       (ow_data_ready)
 #define OW_CLEAR_READY_FLAG() do{ow_data_ready = 0;}while(0)
+#define OW_MEASUREMENTS_DONE()  (ow_measurements_done)
+#define OW_CLEAR_DONE_FLAG()  do{ow_measurements_done = 0;}while(0)
 
 void OW_process();
-void OW_fill_ID(uint8_t N);
+void OW_fill_next_ID();
+void OW_send_read_seq();
 uint8_t OW_Send(uint8_t sendReset, uint8_t *command, uint8_t cLen);
-void OW_printID(uint8_t N, sendfun s);
 
+extern int32_t OW_temperature[];
+extern int8_t Ncur;
+void OW_read_next_temp();
+#define OW_current_num()   (Ncur)
 
+/*
+ * thermometer commands
+ * send them with bus reset!
+ */
+// find devices
+#define OW_SEARCH_ROM       (0xf0)
+// read device (when it is alone on the bus)
+#define OW_READ_ROM         (0x33)
+// send device ID (after this command - 8 bytes of ID)
+#define OW_MATCH_ROM        (0x55)
+// broadcast command
+#define OW_SKIP_ROM         (0xcc)
+// find devices with critical conditions
+#define OW_ALARM_SEARCH     (0xec)
+/*
+ * thermometer functions
+ * send them without bus reset!
+ */
+// start themperature reading
+#define OW_CONVERT_T         (0x44)
+// write critical temperature to device's RAM
+#define OW_SCRATCHPAD        (0x4e)
+// read whole device flash
+#define OW_READ_SCRATCHPAD   (0xbe)
+// copy critical themperature from device's RAM to its EEPROM
+#define OW_COPY_SCRATCHPAD   (0x48)
+// copy critical themperature from EEPROM to RAM (when power on this operation runs automatically)
+#define OW_RECALL_E2         (0xb8)
+// check whether there is devices wich power up from bus
+#define OW_READ_POWER_SUPPLY (0xb4)
 
-#if 0
-
-
-uint8_t OW_Get(uint8_t buflen, uint8_t *data, uint8_t readStart);
-uint8_t OW_Scan(uint8_t *buf, uint8_t num);
-
-// shortcuts for functions
-// only send message b wich length is c with RESET flag a
-#define OW_SendOnly(a,b,c)  OW_Send(a, b, c)
-// send 1 command (with bus reset)
-#define OW_WriteCmd(cmd) OW_Send(1, cmd, 1)
-// send 1 function (without bus reset)
-#define OW_WriteFn(cmd) OW_Send(0, cmd, 1)
-#define OW_Wait_TX() while(!(USART_SR(OW_USART_X) & USART_SR_TC))
-
-void OW_getTemp();
-
-
-#endif
 
 /*
  * thermometer identificator is: 8bits CRC, 48bits serial, 8bits device code (10h)
@@ -77,48 +121,6 @@ void OW_getTemp();
  * T_H is highest -//-
  * format T_H and T_L: 1bit sigh + 7bits of data
  */
-
-/*
- * thermometer commands (DS18S20)\
- * send them with bus reset!
- */
-// find devices
-#define T_SEARCH_ROM		(0xf0)
-#define OW_SEARCH_ROM		(uint8_t*)"\xf0"
-// read device (when it is alone on the bus)
-#define T_READ_ROM			(0x33)
-#define OW_READ_ROM			(uint8_t*)"\x33"
-// send device ID (after this command - 8 bytes of ID)
-#define T_MATCH_ROM			(0x55)
-#define OW_MATCH_ROM		(uint8_t*)"\x55"
-// broadcast command
-#define T_SKIP_ROM			(0xcc)
-#define OW_SKIP_ROM			(uint8_t*)"\xcc"
-// find devices with critical conditions
-#define T_ALARM_SEARCH		(0xec)
-#define OW_ALARM_SEARCH		(uint8_t*)"\xec"
-/*
- * thermometer functions
- * send them without bus reset!
- */
-// start themperature reading
-#define T_CONVERT_T			(0x44)
-#define OW_CONVERT_T		(uint8_t*)"\x44"
-// write critical temperature to device's RAM
-#define T_SCRATCHPAD		(0x4e)
-#define OW_SCRATCHPAD		(uint8_t*)"\x4e"
-// read whole device flash
-#define T_READ_SCRATCHPAD	(0xbe)
-#define OW_READ_SCRATCHPAD	(uint8_t*)"\xbe"
-// copy critical themperature from device's RAM to its EEPROM
-#define T_COPY_SCRATCHPAD	(0x48)
-#define OW_COPY_SCRATCHPAD	(uint8_t*)"\x48"
-// copy critical themperature from EEPROM to RAM (when power on this operation runs automatically)
-#define T_RECALL_E2			(0xb8)
-#define OW_RECALL_E2		(uint8_t*)"\xb8"
-// check whether there is devices wich power up from bus
-#define T_READ_POWER_SUPPLY (0xb4)
-#define OW_READ_POWER_SUPPLY (uint8_t*)"\xb4"
 
 
 /*

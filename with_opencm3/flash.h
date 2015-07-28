@@ -25,6 +25,7 @@
 
 #include "main.h"
 #include "user_proto.h"
+#include "onewire.h"
 
 /*
  * this is a default values of stored data
@@ -41,6 +42,8 @@ typedef struct{
 	// A-D value[x] = ADU * ADC_multipliers[x] / ADC_divisors[x]
 	uint32_t _ADC_multipliers[ADC_CHANNELS_NUMBER];
 	uint32_t _ADC_divisors[ADC_CHANNELS_NUMBER];
+	uint8_t _OW_id_array[8][OW_MAX_NUM];
+	uint8_t _OW_dev_amount;
 //	char last_addr[0]; // we need this pointer to calculate real size of structure
 }stored_data;
 
@@ -53,6 +56,8 @@ extern stored_data Stored_Data;
 
 #define ADC_multipliers  Stored_Data._ADC_multipliers
 #define ADC_divisors     Stored_Data._ADC_divisors
+#define OW_id_array      Stored_Data._OW_id_array
+#define OW_dev_amount    Stored_Data._OW_dev_amount
 
 void dump_flash_data(sendfun s);
 uint8_t save_flashdata();

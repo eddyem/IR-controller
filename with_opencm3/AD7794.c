@@ -20,6 +20,7 @@
  */
 
 #include "main.h"
+#include "AD7794.h"
 #include "spi.h"
 #include "cdcacm.h"
 

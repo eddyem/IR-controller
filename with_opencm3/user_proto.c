@@ -24,6 +24,9 @@
 #include "uart.h"
 #include "hardware_ini.h"
 #include "flash.h"
+#include "stepper_motors.h"
+#include "powerhw.h"
+#include "AD7794.h"
 
 // mode:
 curmode_t mode = BYTE_MODE; // text protocol, activated on 1st meeteng of '['
@@ -57,7 +60,7 @@ static intfun I = NULL; // function to process entered integer
 void print_ad_vals(sendfun s){
 	int j;
 	if(ad7794_on){
-		for(j = 0; j < TRD_NO; j++){
+		for(j = 0; j < TRD_NO; ++j){
 			if(mode == LINE_MODE){
 				P("[ " STR_EXTADC_VALUES " ", s);
 				print_int(j, s);
@@ -91,6 +94,22 @@ void print_int_ad_vals(sendfun s){
 		if(mode == BYTE_MODE) s(' ');
 		else if(mode == LINE_MODE)
 			P(" ]\n", s);
+	}
+	if(OW_scan){ // print 1-wire temperatures
+		for(j = 0; j < OW_dev_amount; ++j){
+			if(OW_temperature[j] != ERR_TEMP_VAL){
+				if(mode == LINE_MODE)
+					P("[ " STR_INTADC_VALUES " ", s);
+				else
+					s('N');
+				print_int(j + TRD_NO, s);
+				s(' ');
+				print_int(OW_temperature[j], s);
+				if(mode == LINE_MODE)
+					P(" ]\n", s);
+				else s(' ');
+			}
+		}
 	}
 }
 
@@ -225,10 +244,10 @@ void help(sendfun s){
 	pr("L\tmove filters (2) wheel to Nth position");
 	pr("M\tswitch on/off ADC monitoring");
 	//pr("N");
-	//pr("O");
-	pr("P\ttest (ow_fill_id)");
-	//pr("Q");
-	//pr("R");
+	pr("O\tturn on 1-wire scan");
+	pr("P\tadd 1-wire sensor");
+	pr("Q\tturn off 1-wire scan");
+	pr("R\terase 1-wire IDs from memory");
 	pr("S\tturn AD7794 to single conversion mode");
 	pr(STR_PRINT_TIME "\tprint current value of time counters");
 	//pr("U\t(reserved)");
@@ -242,7 +261,7 @@ void help(sendfun s){
 	pr("c\tclose shutter");
 	pr("d\tchange value of ADC divisor No N");
 	//pr("e");
-	pr("f\tsave current values of ADC mult/div to flash");
+	pr("f\tupdate flash settings");
 	pr("g\tchange AD7794 gain");
 	pr(STR_SHTR_VOLTAGE "\tshow shutter voltage");
 	pr(STR_EXTADC_INIT "\tinit AD7794");
@@ -431,6 +450,12 @@ int parce_incoming_buf(char *buf, int len, sendfun s){
 			case 'o': // open shutter
 				do_echo = try_to_open_shutter();
 			break;
+			case 'O': // 1-wire scan ON
+				if(!OW_scan){
+					OW_scan = 1;
+					OW_send_read_seq();
+				}
+			break;
 			case CMD_MOTORS_VOLTAGE: // [p] show motors voltage * 100
 				if(mode == LINE_MODE) P("[ " STR_MOTORS_VOLTAGE " ", s);
 				print_int(power_voltage(), s);
@@ -438,10 +463,16 @@ int parce_incoming_buf(char *buf, int len, sendfun s){
 				newline(s);
 				do_echo = 0;
 			break;
-			case 'P': //  (only for byte mode)
+			case 'P': //  (only for byte mode) - add 1-wire device
 				if(mode != BYTE_MODE) return 0;
-				OW_fill_ID(0);
-				//run_dmatimer();
+				OW_fill_next_ID();
+			break;
+			case 'Q': // 1-wire scan OFF
+				OW_scan = 0;
+			break;
+			case 'R': //  (only for byte mode) - reset 1-wire IDs in RAM
+				if(mode != BYTE_MODE) return 0;
+				OW_dev_amount = 0;
 			break;
 			case 'r': // reinit shutter
 				shutter_init();
@@ -477,14 +508,6 @@ int parce_incoming_buf(char *buf, int len, sendfun s){
 		/*	case 'U': // test: init USART1
 				UART_init(USART1);
 			break; */
-		/*	case 'W': // scan for one 1-wire device
-				if(1 == OW_Scan(onewire_addr, 1)){
-					P("found 1-wire: ", s);
-					print_hex(onewire_addr, 8, s);
-				}else
-					P("1-wire error",s );
-				P("\n", s);
-			break;*/
 			case 'x': // set period of TIM1 (motors 1..3)
 				active_motor = 1;
 				I = set_timr;

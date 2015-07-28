@@ -20,6 +20,7 @@
  */
 #include "main.h"
 #include "stepper_motors.h"
+#include "hardware_ini.h"
 
 //    TODO:  function "move motor to given position"
 

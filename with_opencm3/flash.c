@@ -37,7 +37,18 @@ const flash_data Flash_Data __attribute__ ((aligned(FLASH_BLOCK_SIZE))) = {
 	._ADC_divisors = {1,1,1,1,1,1,1,1, // TRD
 		25, // shutter
 		7   // power
-	}
+	},
+	._OW_id_array = { // ID of 1-wire sensors
+		{0x10, 0xad, 0xbc, 0x8f, 0x02, 0x08, 0x00, 0xf9},
+		{0x10, 0x78, 0xe4, 0x8f, 0x02, 0x08, 0x00, 0x7d},
+		{0x10, 0x46, 0x0a, 0x90, 0x02, 0x08, 0x00, 0x59},
+		{0x10, 0x68, 0xd6, 0x8f, 0x02, 0x08, 0x00, 0x21},
+		{0x10, 0x7c, 0xee, 0x8f, 0x02, 0x08, 0x00, 0x1c},
+		{0x10, 0xf7, 0x02, 0x90, 0x02, 0x08, 0x00, 0x57},
+		{0x10, 0x92, 0xf1, 0x8f, 0x02, 0x08, 0x00, 0x35},
+		{0x10, 0x5f, 0x02, 0x90, 0x02, 0x08, 0x00, 0xaa}
+	},
+	._OW_dev_amount = 8
 }
 };
 
@@ -104,14 +115,27 @@ void dump_flash_data(sendfun s){
 //	P("magick: ", s);
 //	print_int(Stored_Data.magick, s);
 	P("\nADC multipliers: ", s);
-	for(i = 0; i < ADC_CHANNELS_NUMBER; i++){
+	for(i = 0; i < ADC_CHANNELS_NUMBER; ++i){
 		if(i) P(", ", s);
 		print_int(Flash_Data.all_stored._ADC_multipliers[i], s);
 	}
 	P("\nADC divisors: ", s);
-	for(i = 0; i < ADC_CHANNELS_NUMBER; i++){
+	for(i = 0; i < ADC_CHANNELS_NUMBER; ++i){
 		if(i) P(", ", s);
 		print_int(Flash_Data.all_stored._ADC_divisors[i], s);
 	}
-	s('\n');
+	P("\n1-wire IDs:\n", s);
+	for(i = 0; i < OW_dev_amount; ++i){
+		int j;
+		uint8_t *ROM = OW_id_array[i];
+		s('\t');
+		print_int(i, s);
+		P(") ", s);
+		for(j = 0; j < 8; ++j){
+			if(j) P(", ", s);
+			print_hex(&ROM[j], 1, s);
+		}
+		s('\n');
+	}
 }
+
