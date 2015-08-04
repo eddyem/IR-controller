@@ -96,6 +96,8 @@ void print_hex(uint8_t *buff, uint8_t l, sendfun s);
 #define STR_EXTADC_INIT				"i"
 #define CMD_MOTORS_VOLTAGE			'p'
 #define STR_MOTORS_VOLTAGE			"p"
+#define CMD_INIT_STATUS				'q'
+#define STR_INIT_STATUS				"q"
 #define CMD_EXTADC_VALUES			's'
 #define STR_EXTADC_VALUES			"s"
 #define CMD_SHTR_STATE				't'

@@ -86,6 +86,8 @@
 
 extern uint8_t move2pos[]; // export this array for ability of moving turret to given position from outside
 
+extern volatile uint8_t Motor_active[];
+
 void steppers_init();
 void process_stepper_motors();
 uint8_t move_motor(uint8_t num, int32_t steps);

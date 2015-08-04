@@ -192,9 +192,9 @@ void adc_dma_on(){
 
 void ADC_init(){
 	rcc_peripheral_enable_clock(&RCC_APB2ENR, RCC_APB2ENR_ADC1EN); // enable clocking
-	rcc_periph_clock_enable(RCC_ADC1);
+//	rcc_periph_clock_enable(RCC_ADC1);
 	rcc_set_adcpre(RCC_CFGR_ADCPRE_PCLK2_DIV4);
-	rcc_periph_clock_enable(RCC_GPIOA | RCC_GPIOB | RCC_GPIOC); // clocking for ADC ports
+	//rcc_periph_clock_enable(RCC_GPIOA | RCC_GPIOB | RCC_GPIOC); // clocking for ADC ports
 	// channels 4-7: PA7-PA4 (ADC IN 4..7); U10 (PA0); U36 (PA1)
 	gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO4|GPIO5|GPIO6|GPIO7|GPIO1|GPIO0);
 	// channels 0,1: PB1, PB0 (ADC IN 8, 9)

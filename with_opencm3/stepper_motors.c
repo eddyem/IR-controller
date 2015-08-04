@@ -35,7 +35,7 @@ static volatile int32_t Motor_abs_steps[5] = {0, 0, 0, 0, 0};
 // increments that will be added each step to Motor_abs_steps (+1/-1)
 static int8_t Motor_step_increment[5] = {1,1,1,1,1};
 // flag of active motor
-static volatile uint8_t Motor_active[5] = {0, 0, 0, 0, 0};
+volatile uint8_t Motor_active[5] = {0, 0, 0, 0, 0};
 /*
  * Wait flags: if non-zero, flag just decremented
  * (we need it to wait a little on turrets' fixed positions to omit Halls' histeresis)

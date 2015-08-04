@@ -27,6 +27,7 @@
 #include "stepper_motors.h"
 #include "powerhw.h"
 #include "AD7794.h"
+#include "init_on_power.h"
 
 // mode:
 curmode_t mode = BYTE_MODE; // text protocol, activated on 1st meeteng of '['
@@ -272,7 +273,7 @@ void help(sendfun s){
 	//pr("n");
 	pr("o\topen shutter");
 	pr(STR_MOTORS_VOLTAGE "\tshow motors voltage");
-	//pr("q");
+	pr("q\tget initialisation status");
 	pr("r\treinit shutter");
 	pr(STR_EXTADC_VALUES "\tshow AD7794 values");
 	pr(STR_SHTR_STATE "\tprint shutter state");
@@ -281,7 +282,7 @@ void help(sendfun s){
 	//pr("w");
 	pr("x\tset timer period for turrets' motors");
 	//pr("y");
-	//pr("z");
+	pr("z\treinitialisation (move linear stages to zero position)");
 	pr("\nAfter entering of user value press '+' to submit or '-' to reject it");
 	#undef pr
 }
@@ -467,6 +468,10 @@ int parce_incoming_buf(char *buf, int len, sendfun s){
 				if(mode != BYTE_MODE) return 0;
 				OW_fill_next_ID();
 			break;
+			case CMD_INIT_STATUS: // [q] - get init status
+				print_init_status();
+				do_echo = 0;
+			break;
 			case 'Q': // 1-wire scan OFF
 				OW_scan = 0;
 			break;
@@ -521,6 +526,9 @@ int parce_incoming_buf(char *buf, int len, sendfun s){
 			case CMD_MOTOR_POSITION: // [Z]: show positions of all motors
 				get_motors_position();
 				do_echo = 0;
+			break;
+			case 'z':
+				forced_init();
 			break;
 /*
 			case '_':

@@ -32,6 +32,7 @@
 #include "onewire.h"
 #include "stepper_motors.h"
 #include "powerhw.h"
+#include "init_on_power.h"
 
 volatile uint32_t Timer = 0, tOVRFL = 0; // global timer (milliseconds), overflow counter
 usbd_device *usbd_dev;
@@ -215,6 +216,7 @@ int main(){
 
 	LED_STATUS_OK(); // All initialized - light up LED
 	while(1){
+		init_on_poweron_proc();
 		usbd_poll(usbd_dev);
 		if(oldusbdatalen != usbdatalen){ // there's something in USB buffer
 			usbdatalen = parce_incoming_buf(usbdatabuf, usbdatalen, usb_send);
